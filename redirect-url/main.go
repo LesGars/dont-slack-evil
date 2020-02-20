@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
+	"fmt"
+	"os"
+	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -16,28 +16,28 @@ import (
 type Response events.APIGatewayProxyResponse
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
-func Handler(ctx context.Context) (Response, error) {
-	var buf bytes.Buffer
+func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	code := request.QueryStringParameters["code"]
+	state := request.QueryStringParameters["state"]
+	clientID := os.Getenv("CLIENT_ID")
+	clientSecret := os.Getenv("CLIENT_SECRET")
+	url := fmt.Sprintf(
+		"https://slack.com/api/oauth.access?client_id=%s&client_secret=%s&code=%s&state=%s",
+		clientID,
+		clientSecret,
+		code,
+		state,
+	)
+	fmt.Println(url)
+	resp, err := http.Get(url)
+	fmt.Println(resp)
+	fmt.Println(err)
 
-	body, err := json.Marshal(map[string]interface{}{
-		"message": "Go Serverless v1.0! Your function executed successfully!",
-	})
-	if err != nil {
-		return Response{StatusCode: 404}, err
-	}
-	json.HTMLEscape(&buf, body)
-
-	resp := Response{
-		StatusCode:      200,
-		IsBase64Encoded: false,
-		Body:            buf.String(),
-		Headers: map[string]string{
-			"Content-Type":           "application/json",
-			"X-MyCompany-Func-Reply": "hello-handler",
-		},
-	}
-
-	return resp, nil
+	//Returning response with AWS Lambda Proxy Response
+	return events.APIGatewayProxyResponse {
+		Body: "ok",
+		StatusCode: 200,
+	}, nil
 }
 
 func main() {
