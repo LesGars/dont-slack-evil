@@ -17,3 +17,9 @@ functions:
       - http:
           path: hello
           method: get
+  redirectUrl:
+    handler: bin/redirect-url
+    events:
+      - http:
+          path: redirect-url
+          method: get
