@@ -1,8 +1,15 @@
+# VSCode settings
+.vscode
+
 # Serverless directories
 .serverless
 
-# golang output binary directory
+# Go bin and pkg directories if using GOPATH inside the project (not recommended)
 bin
+pkg
+
+# Go vendor directory
+vendor
 
 # Binaries for programs and plugins
 *.exe
@@ -16,3 +23,7 @@ bin
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Final binary
+dont-slack-evil
+
