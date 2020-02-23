@@ -101,6 +101,9 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	return events.APIGatewayProxyResponse {
 		Body: fmt.Sprintf("%s", result),
 		StatusCode: 200,
+		Headers: map[string]string{
+			"content-type": "text/plain",
+		},
 	}, nil
 }
 
