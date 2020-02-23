@@ -1,3 +1,4 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/gjgd/dont-slack-evil)](https://goreportcard.com/report/github.com/gjgd/dont-slack-evil)
 # Don't Slack Evil
 
 Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack App virtual hackathon](https://slackapponlinehackathon.splashthat.com/)
