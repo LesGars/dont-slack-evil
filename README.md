@@ -48,17 +48,20 @@ $HOME/go/bin/golint ./..
 ```
 **WARNING:** The linter will also show errors from the `/vendor` directory
 
-## Adding a new dependency
+## Adding/removing a dependency
 
-* If you are using VSCode, the dependency will be downloaded in the background. Else, you will have to run
+* If you are using VSCode, the added dependency will be downloaded in the background. Otherwise, you will have to run
 ```
 go get -u <Dependency_Path>
 ```
-* Delete the `vendor/` folder and run
+* Delete the `vendor/` folder, cd into the project's root dir and run these 2 commands:
 ```
+# Recreate the vendor/ folder
 go mod vendor
+
+# Update go.mod and go.sum
+go mod tidy
 ```
-at the root of the project
 
 ## Running tests
 
