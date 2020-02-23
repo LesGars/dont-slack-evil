@@ -3,6 +3,7 @@ service: dont-slack-evil
 provider:
   name: aws
   runtime: go1.x
+  profile: dont-slack-evil-hackaton
 
 package:
   exclude:
