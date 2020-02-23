@@ -3,12 +3,29 @@ service: dont-slack-evil
 provider:
   name: aws
   runtime: go1.x
+  stage: dev
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:CreateTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 package:
   exclude:
     - ./**
   include:
     - ./bin/**
+
+custom:
+  secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
 
 functions:
   hello:
@@ -23,3 +40,6 @@ functions:
       - http:
           path: redirect-url
           method: get
+    environment:
+      CLIENT_ID: ${self:custom.secrets.CLIENT_ID}
+      CLIENT_SECRET: ${self:custom.secrets.CLIENT_SECRET}
