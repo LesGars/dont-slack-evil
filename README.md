@@ -7,6 +7,16 @@ Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack Ap
 1) Setup the [serverless framework](https://github.com/serverless/serverless)
 2) Deploy: `make deploy`
 
+# Useful links
+
+## Serverless AWS Lambda in Golang
+
+https://github.com/serverless/examples
+
+## DynamoDB
+
+https://github.com/awsdocs/aws-doc-sdk-examples/tree/456068072ee2ee696b2aac4724c925171c2bb2ff/go/example_code/dynamodb
+
 # Useful commands
 
 ```bash
