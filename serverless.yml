@@ -4,6 +4,8 @@ provider:
   name: aws
   runtime: go1.x
   stage: dev
+  profile: dont-slack-evil-hackaton
+
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-example
   iamRoleStatements:
