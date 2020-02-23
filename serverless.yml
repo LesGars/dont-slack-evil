@@ -5,7 +5,7 @@ provider:
   runtime: go1.x
   stage: dev
   environment:
-    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-example
   iamRoleStatements:
     - Effect: Allow
       Action:
