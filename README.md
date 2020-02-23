@@ -6,7 +6,7 @@ Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack Ap
 
 1) Setup the [serverless framework](https://github.com/serverless/serverless)
 2) Set up shared AWS credentials:
-  - Add Cyril for the shared AWS credentials
+  - Ask Cyril for the shared AWS credentials
   - Add to your AWS credentials file (`~/.aws/credentials`) the following:
   ```
   [dont-slack-evil-hackaton]
