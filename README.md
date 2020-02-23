@@ -23,7 +23,7 @@ Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack Ap
 ```
 The first property, `go.useLanguageServer`, will activate the Language Server for Go, which will improve features such as autocompletion, when using modules.
 
-The second property, `go.toolsEnvVars`, it will export 2 env vars when code analysis is performed by VSCode:
+The second property, `go.toolsEnvVars`, will export 2 env vars when code analysis is performed by VSCode:
 
 1. `GO111MODULES=on`: this will activate the use of [Golang modules](https://blog.golang.org/using-go-modules)
 2. `GOFLAGS=-mod=vendor`: references to external packages will be looked up in the `/vendor` gitignored folder
