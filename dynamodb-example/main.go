@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	// "net/http"
-	// "strconv"
+	"math/rand"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -23,18 +23,6 @@ type Response events.APIGatewayProxyResponse
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	code := request.QueryStringParameters["code"]
-	state := request.QueryStringParameters["state"]
-	clientID := os.Getenv("CLIENT_ID")
-	clientSecret := os.Getenv("CLIENT_SECRET")
-	url := fmt.Sprintf(
-		"https://slack.com/api/oauth.access?client_id=%s&client_secret=%s&code=%s&state=%s",
-		clientID,
-		clientSecret,
-		code,
-		state,
-	)
-	fmt.Println(url)
 
 	// Create DynamoDB client
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -72,12 +60,11 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// Add item to DynamoDB table
+	randomString := strconv.Itoa(rand.Int())
 	item := map[string]string{
-		"id": "bonjour",
+		"id": randomString,
 	}
-	fmt.Println(item)
 	av, err := dynamodbattribute.MarshalMap(item)
-	fmt.Println(av)
 	if err != nil {
 		fmt.Println("Got error marshalling new item:")
 		fmt.Println(err.Error())
@@ -92,27 +79,25 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		fmt.Println("Got error calling PutItem:")
 		fmt.Println(err.Error())
 		os.Exit(1)
-	} else {
-		fmt.Println("Successfully added to" + tableName)
 	}
 
+	// Retrieve item from DynamoDB table
+	result, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+				"id": {
+						S: aws.String(randomString),
+				},
+		},
+	})
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
 
-	// resp, err := http.Get(url)
-	// fmt.Println(resp)
-	// fmt.Println(err)
-
-  // const params = {
-  //   TableName: process.env.DYNAMODB_TABLE,
-  //   Item: {
-  //     id: item.team_id,
-  //     ...item,
-  //   },
-	// };
-
-
-	//Returning response with AWS Lambda Proxy Response
+	// Returning response with AWS Lambda Proxy Response
 	return events.APIGatewayProxyResponse {
-		Body: "ok",
+		Body: fmt.Sprintf("%s", result),
 		StatusCode: 200,
 	}, nil
 }

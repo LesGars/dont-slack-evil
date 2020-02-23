@@ -24,9 +24,6 @@ package:
   include:
     - ./bin/**
 
-custom:
-  secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
-
 functions:
   hello:
     handler: bin/hello
@@ -35,11 +32,8 @@ functions:
           path: hello
           method: get
   redirectUrl:
-    handler: bin/redirect-url
+    handler: bin/dynamodb-example
     events:
       - http:
-          path: redirect-url
+          path: dynamodb-example
           method: get
-    environment:
-      CLIENT_ID: ${self:custom.secrets.CLIENT_ID}
-      CLIENT_SECRET: ${self:custom.secrets.CLIENT_SECRET}
