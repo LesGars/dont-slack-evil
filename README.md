@@ -60,6 +60,15 @@ go mod vendor
 ```
 at the root of the project
 
+## Running tests
+
+Project-level tests can be run with this single command:
+
+```
+go test ./...
+```
+You can append the `-v` flag for verbose input
+
 # Getting started
 
 1) Setup the [serverless framework](https://github.com/serverless/serverless)
