@@ -47,6 +47,18 @@ $HOME/go/bin/golint ./..
 ```
 **WARNING:** The linter will also show errors from the `/vendor` directory
 
+## Adding a new dependency
+
+* If you are using VSCode, the dependency will be downloaded in the background. Else, you will have to run
+```
+go get -u <Dependency_Path>
+```
+* Delete the `vendor/` folder and run
+```
+go mod vendor
+```
+at the root of the project
+
 # Getting started
 
 1) Setup the [serverless framework](https://github.com/serverless/serverless)
