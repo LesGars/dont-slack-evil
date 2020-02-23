@@ -28,17 +28,14 @@ jobs:
       - name: Run tests
         run: go test ./...
   deploy:
-    name: Deploy
+    name: Serverless deploy master branch
     runs-on: ubuntu-latest
     needs: build
     # Uncomment after the build is green on this PR
     # if: github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@master
-      - name: npm install
-        uses: actions/npm@master
-        with:
-          args: install
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
       - name: serverless deploy
         uses: serverless/github-action@master
         with:
