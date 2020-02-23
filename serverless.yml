@@ -3,7 +3,22 @@ service: dont-slack-evil
 provider:
   name: aws
   runtime: go1.x
+  stage: dev
   profile: dont-slack-evil-hackaton
+
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-example
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:CreateTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 package:
   exclude:
@@ -17,4 +32,10 @@ functions:
     events:
       - http:
           path: hello
+          method: get
+  dynamodbExample:
+    handler: bin/dynamodb-example
+    events:
+      - http:
+          path: dynamodb-example
           method: get
