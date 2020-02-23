@@ -6,6 +6,7 @@ import (
 	"strings"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -60,6 +61,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// Add item to DynamoDB table
+	rand.Seed(time.Now().UnixNano())
 	randomString := strconv.Itoa(rand.Int())
 	item := map[string]string{
 		"id": randomString,
