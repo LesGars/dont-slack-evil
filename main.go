@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
-import "dont-slack-evil/helpers"
+import (
+	"dont-slack-evil/helpers"
+	"fmt"
+)
 
 func main() {
 	fmt.Println(helpers.Hello())
