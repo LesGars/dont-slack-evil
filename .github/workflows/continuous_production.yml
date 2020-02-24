@@ -41,9 +41,9 @@ jobs:
       - name: Install Serverless Cli
         run: |
           curl -o- -L https://slss.io/install | bash
-          echo "::add-path::$HOME/.serverless/bin/serverless"
           echo "$PATH"
-          source $HOME/.bashrc
+          echo "export PATH=$PATH:$HOME/.serverless/bin" >> ~/.bash_profile
+          source ~/.bash_profile
           echo "$PATH"
           $HOME/.serverless/bin/serverless --version
           serverless --version
