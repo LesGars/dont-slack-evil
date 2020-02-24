@@ -41,7 +41,8 @@ jobs:
       - name: Install Serverless Cli
         run: |
           curl -o- -L https://slss.io/install | bash
-          source $HOME/.zshrc
+          echo "$(basename "/$SHELL")"
+          source $HOME/.bashrc
           serverless --version
           sls --version
       - name: Add credentials to ~/.aws/credentials
