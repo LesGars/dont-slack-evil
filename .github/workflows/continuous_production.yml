@@ -45,8 +45,7 @@ jobs:
           echo "lol"
           $HOME/.serverless/bin/serverless --version
           echo "mdr"
-          alias sls=$HOME/.serverless/bin/sls
-          sls --version
+          sleep 5
       - name: Test
         run: |
           serverless --version
