@@ -42,7 +42,10 @@ jobs:
         run: |
           curl -o- -L https://slss.io/install | bash
           echo "$(basename "/$SHELL")"
+          cat $HOME/.bashrc
           source $HOME/.bashrc
+          ls $HOME/.serverless/bin
+          $HOME/.serverless/bin/serverless --version
           serverless --version
           sls --version
       - name: Add credentials to ~/.aws/credentials
