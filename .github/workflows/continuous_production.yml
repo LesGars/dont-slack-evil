@@ -42,12 +42,10 @@ jobs:
         run: |
           curl -o- -L https://slss.io/install | bash
           echo "::add-path::$HOME/.serverless/bin/serverless"
-          echo "lol"
+          echo "$PATH"
+          source $HOME/.bashrc
+          echo "$PATH"
           $HOME/.serverless/bin/serverless --version
-          echo "mdr"
-          sleep 5
-      - name: Test
-        run: |
           serverless --version
       - name: Add credentials to ~/.aws/credentials
         env:
