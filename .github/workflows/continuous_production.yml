@@ -50,5 +50,4 @@ jobs:
       - name: serverless deploy
         run: |
           export PATH=$PATH:$HOME/.serverless/bin
-          echo $PATH
           make deploy
