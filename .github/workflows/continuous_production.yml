@@ -41,8 +41,11 @@ jobs:
       - name: Install Serverless Cli
         run: |
           curl -o- -L https://slss.io/install | bash
-          $HOME/.serverless/bin/serverless --version
           echo "::add-path::$HOME/.serverless/bin/serverless"
+          echo "lol"
+          $HOME/.serverless/bin/serverless --version
+          echo "mdr"
+          serverless --version
       - name: Test
         run: |
           serverless --version
