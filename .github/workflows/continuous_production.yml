@@ -41,13 +41,11 @@ jobs:
       - name: Install Serverless Cli
         run: |
           curl -o- -L https://slss.io/install | bash
-          echo "$(basename "/$SHELL")"
-          cat $HOME/.bashrc
-          source $HOME/.bashrc
-          ls $HOME/.serverless/bin
           $HOME/.serverless/bin/serverless --version
+          echo "::add-path::$HOME/.serverless/bin/serverless"
+      - name: Test
+        run: |
           serverless --version
-          sls --version
       - name: Add credentials to ~/.aws/credentials
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
