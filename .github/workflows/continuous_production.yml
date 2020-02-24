@@ -36,12 +36,16 @@ jobs:
     steps:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+      - name: Install AWS Cli
+        uses: chrislennon/action-aws-cli@v1.1
+      - name: Add credentials to ~/.aws/credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile dont-slack-evil-hackaton
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile dont-slack-evil-hackaton
       - name: serverless deploy
         uses: serverless/github-action@master
         with:
           args: deploy
-        env:
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
-          # or if using AWS creds directly
-          # AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          # AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
