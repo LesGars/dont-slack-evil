@@ -19,7 +19,6 @@ type Response events.APIGatewayProxyResponse
 // Handler function for the incoming webhook endpoint
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	webhookURL := os.Getenv("SLACK_INCOMING_WEBHOOK_URL")
-	fmt.Println(webhookURL)
 
 	reqBody, err := json.Marshal(map[string]string{
 		"text": "Hello world from the incoming-webhook lambda",
