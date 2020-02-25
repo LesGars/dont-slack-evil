@@ -12,10 +12,6 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-// Response is of type APIGatewayProxyResponse since we're leveraging the
-// AWS Lambda Proxy Request functionality (default behavior)
-type Response events.APIGatewayProxyResponse
-
 // Handler function for the incoming webhook endpoint
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	webhookURL := os.Getenv("SLACK_INCOMING_WEBHOOK_URL")
