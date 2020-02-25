@@ -42,3 +42,11 @@ functions:
       - http:
           path: dynamodb-example
           method: get
+  incomingWebhook:
+    handler: bin/incoming-webhook
+    events:
+      - http:
+          path: incoming-webhook
+          method: get
+    environment:
+      SLACK_INCOMING_WEBHOOK_URL: ${self:custom.secrets.SLACK_INCOMING_WEBHOOK_URL}
