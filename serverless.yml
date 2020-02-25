@@ -26,6 +26,9 @@ package:
   include:
     - ./bin/**
 
+custom:
+  secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
+
 functions:
   hello:
     handler: bin/hello
