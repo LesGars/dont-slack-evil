@@ -3,6 +3,7 @@
 
 # Serverless directories
 .serverless
+secrets.dev.yml
 
 # Go bin and pkg directories if using GOPATH inside the project (not recommended)
 bin
