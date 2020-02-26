@@ -1,0 +1,52 @@
+name: Continuous production
+on:
+  - push
+  # - pull_request # already covered by push
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Get dependencies
+        run: |
+          go get -v -t -d ./...
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              go mod tidy
+          fi
+      - name: Build
+        run: go build -v .
+      - name: Run tests
+        run: go test ./...
+  deploy:
+    name: Serverless deploy master branch
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+      - name: Install AWS Cli
+        uses: chrislennon/action-aws-cli@v1.1
+      - name: Install Serverless Cli
+        run: curl -o- -L https://slss.io/install | bash
+      - name: Add credentials to ~/.aws/credentials
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile dont-slack-evil-hackaton
+          aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile dont-slack-evil-hackaton
+      - name: serverless deploy
+        run: |
+          export PATH=$PATH:$HOME/.serverless/bin
+          make deploy
