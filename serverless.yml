@@ -33,6 +33,12 @@ functions:
       - http:
           path: hello
           method: get
+  messages:
+    handler: bin/messages
+    events:
+      - http:
+          path: messages
+          method: post
   dynamodbExample:
     handler: bin/dynamodb-example
     events:
