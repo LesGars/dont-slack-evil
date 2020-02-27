@@ -32,6 +32,6 @@ func UserHome(userId string) slack.Message {
 }
 
 func translateUserIdToUserName(userId string) string {
-	// TODO
+	// TODO in https://github.com/gjgd/dont-slack-evil/issues/16
 	return userId
 }
