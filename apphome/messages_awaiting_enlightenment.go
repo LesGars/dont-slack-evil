@@ -36,7 +36,7 @@ func EnlightenmentMessages() []slack.Block {
 	var blocks []slack.Block
 
 	for _, message := range messages {
-		blocks = append(blocks, dseMessageBlocks(message)...)
+		blocks = append(blocks, formatMessageToBeEnlightened(message)...)
 	}
 	return blocks
 }
@@ -56,7 +56,7 @@ func parseTestMessages() []Message {
 	return messages
 }
 
-func dseMessageBlocks(message Message) []slack.Block {
+func formatMessageToBeEnlightened(message Message) []slack.Block {
 	submittedBy := slack.NewTextBlockObject("plain_text", "Submitted by", false, false)
 	submittedByImage := slack.NewImageBlockElement("https://api.slack.com/img/blocks/bkb_template_images/profile_3.png", message.UserName)
 	submittedByName := slack.NewTextBlockObject("plain_text", message.UserName, false, false)

@@ -8,13 +8,23 @@ import (
 )
 
 func UserHome(userId string) slack.Message {
-	message := slack.NewBlockMessage(append(
-		introSections(translateUserIdToUserName(userId)),
-		statsSections()...,
-	)...)
+	name := translateUserIdToUserName(userId)
+	message := slack.NewBlockMessage(
+		append(
+			HomeBasicSections(name),
+			EnlightenmentSection()...,
+		)...,
+	)
 	message.Msg.Type = "home"
 
 	return message
+}
+
+func HomeBasicSections(userName string) []slack.Block {
+	return append(
+		introSections(userName),
+		statsSections()...,
+	)
 }
 
 func translateUserIdToUserName(userId string) string {
@@ -48,8 +58,8 @@ func statsSections() []slack.Block {
 			(ends in %d days)
 			Number of slack messages: %d
 			Evil messages: %d
-			Improved messages with DSE: %d/%d
-		`, daysLeftUntilQuarterEnd, numberOfSlackMessages, numberOfEvilMessages, numberOfImprovedMessages, numberOfEvilMessages,
+			Improved messages with DSE: %d/%d`,
+			daysLeftUntilQuarterEnd, numberOfSlackMessages, numberOfEvilMessages, numberOfImprovedMessages, numberOfEvilMessages,
 		)),
 		false, false,
 	)
@@ -59,8 +69,8 @@ func statsSections() []slack.Block {
 			*Top Channels with evil messages*
 			:airplane: General · 30%% (142)
 			:taxi: Code Reviews · 66%% (43)
-			:knife_fork_plate: Direct Messages · 18%% (75)
-		`)),
+			:knife_fork_plate: Direct Messages · 18%% (75)`,
+		)),
 		false, false,
 	)
 	fields := []*slack.TextBlockObject{messageStats, topChannelsText}
