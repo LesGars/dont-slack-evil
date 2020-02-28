@@ -33,13 +33,11 @@ func translateUserIdToUserName(userId string) string {
 }
 
 func introSections(userName string) []slack.Block {
-	// Header Section
 	headerOptionsTxt := slack.NewTextBlockObject("plain_text", "Manage App Settings", true, false)
 	headerButton := slack.NewButtonBlockElement("", "app_settings", headerOptionsTxt)
 	headerText := slack.NewTextBlockObject("mrkdwn", "*Don't Slack Evil Performance*", false, false)
 	headerSection := slack.NewSectionBlock(headerText, nil, slack.NewAccessory(headerButton))
 
-	// Hello
 	helloText := slack.NewTextBlockObject("plain_text", fmt.Sprintf(" :wave: Hello %s · find your DSE stats below", userName), true, false)
 	helloSection := slack.NewSectionBlock(helloText, nil, nil)
 
@@ -47,7 +45,6 @@ func introSections(userName string) []slack.Block {
 }
 
 func statsSections() []slack.Block {
-	// MessageStats
 	numberOfEvilMessages := 24
 	numberOfImprovedMessages := 12
 	numberOfSlackMessages := 42
@@ -74,7 +71,6 @@ func statsSections() []slack.Block {
 		false, false,
 	)
 	fields := []*slack.TextBlockObject{messageStats, topChannelsText}
-	//
 	statsSection := slack.NewSectionBlock(nil, fields, nil)
 	return []slack.Block{statsSection, slack.NewDividerBlock()}
 }

@@ -22,7 +22,6 @@ type Message struct {
 }
 
 func EnlightenmentSection() []slack.Block {
-	// Hello
 	messagesText := slack.NewTextBlockObject("mrkdwn", "*Messages Awaiting Englightnment*", true, false)
 	messagesSection := slack.NewSectionBlock(messagesText, nil, nil)
 
@@ -43,14 +42,12 @@ func EnlightenmentMessages() []slack.Block {
 
 func parseTestMessages() []Message {
 	jsonFile, err := os.Open("sample.json")
-	// if we os.Open returns an error then handle it
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer jsonFile.Close()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 
-	// we initialize our Users array
 	var messages []Message
 	json.Unmarshal([]byte(byteValue), &messages)
 	return messages
