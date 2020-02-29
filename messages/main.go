@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -16,27 +17,24 @@ import (
 // https://serverless.com/framework/docs/providers/aws/events/apigateway/#lambda-proxy-integration
 type Response events.APIGatewayProxyResponse
 
-var api = slack.New("TOKEN")
+var slackOauthToken = os.Getenv("SLACK_OAUTH_TOKEN")
+var api = slack.New(slackOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(ctx context.Context, body []byte) (Response, error) {
-	//buf := new(bytes.Buffer)
-		//buf.ReadFrom(r.Body)
-		//body := buf.String()
 		buf := new(bytes.Buffer)
 		resp := Response{
 			IsBase64Encoded: false,
 			Headers: map[string]string{
 				"Content-Type":           "application/json",
-				"X-MyCompany-Func-Reply": "message-handler",
 			},
 		}
-		eventsAPIEvent, e := slackevents.ParseEvent(json.RawMessage(body), slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: "TOKEN"}))
+		eventsAPIEvent, e := slackevents.ParseEvent(json.RawMessage(body), slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackOauthToken}))
 		if e != nil {
 			resp.StatusCode = 500
 		}
 
-		if eventsAPIEvent.Type == slackevents.URLVerification {
+		if eventsAPIEvent.Type == slackevents.Message {
 			var r *slackevents.ChallengeResponse
 			err := json.Unmarshal([]byte(body), &r)
 			if err != nil {
