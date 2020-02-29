@@ -21,6 +21,6 @@ func ReverseRunes(s string) string {
 }
 
 func QuoteForSlack(message string) string {
-	var re = regexp.MustCompile(`(.*)`)
+	var re = regexp.MustCompile(`(.+)`)
 	return re.ReplaceAllString(message, `> $1`)
 }

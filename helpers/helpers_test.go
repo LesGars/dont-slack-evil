@@ -14,7 +14,7 @@ func TestReverseRunes(t *testing.T) {
 }
 
 func TestQuoteForSlack(t *testing.T) {
-	expected := "> Hello\n> How are you?\n> \n> Life is lemons!"
+	expected := "> Hello\n> How are you?\n\n> Life is lemons!"
 	actual := QuoteForSlack("Hello\nHow are you?\n\nLife is lemons!")
 
 	if diff := deep.Equal(expected, actual); diff != nil {
