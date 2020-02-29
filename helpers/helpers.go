@@ -1,6 +1,10 @@
 package helpers
 
-import "rsc.io/quote"
+import (
+	"regexp"
+
+	"rsc.io/quote"
+)
 
 // Hello returns "hello world" translated in the system's locale
 func Hello() string {
@@ -14,4 +18,9 @@ func ReverseRunes(s string) string {
 		r[i], r[j] = r[j], r[i]
 	}
 	return string(r)
+}
+
+func QuoteForSlack(message string) string {
+	var re = regexp.MustCompile(`(.+)`)
+	return re.ReplaceAllString(message, `> $1`)
 }

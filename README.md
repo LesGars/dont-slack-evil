@@ -1,7 +1,23 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gjgd/dont-slack-evil)](https://goreportcard.com/report/github.com/gjgd/dont-slack-evil)
+![Continuous production](https://github.com/gjgd/dont-slack-evil/workflows/Continuous%20production/badge.svg)
+
 # Don't Slack Evil
 
 Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack App virtual hackathon](https://slackapponlinehackathon.splashthat.com/)
+
+# Getting started
+
+1) Setup the [serverless framework](https://github.com/serverless/serverless)
+2) Set up shared AWS credentials:
+  - Ask Cyril for the shared AWS credentials
+  - Add to your AWS credentials file (`~/.aws/credentials`) the following:
+  ```
+  [dont-slack-evil-hackaton]
+  aws_access_key_id=SECRET_FROM_CYRIL
+  aws_secret_access_key=SECRET_FROM_CYRIL
+  ```
+3) Set up secret file: `cp example.secrets.dev.yml secrets.dev.yml` and fill the secrets
+4) Deploy: `make deploy`
 
 # Requirements
 * [golang](https://golang.org/dl/) >= 1.13
@@ -71,19 +87,6 @@ Project-level tests can be run with this single command:
 go test ./...
 ```
 You can append the `-v` flag for verbose input
-
-# Getting started
-
-1) Setup the [serverless framework](https://github.com/serverless/serverless)
-2) Set up shared AWS credentials:
-  - Ask Cyril for the shared AWS credentials
-  - Add to your AWS credentials file (`~/.aws/credentials`) the following:
-  ```
-  [dont-slack-evil-hackaton]
-  aws_access_key_id=SECRET_FROM_CYRIL
-  aws_secret_access_key=SECRET_FROM_CYRIL
-  ```
-3) Deploy: `make deploy`
 
 # Useful links
 
