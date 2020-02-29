@@ -42,6 +42,8 @@ functions:
       - http:
           path: messages
           method: post
+    environment:
+      SLACK_OAUTH_TOKEN: ${self:custom.secrets.SLACK_OAUTH_TOKEN}
   dynamodbExample:
     handler: bin/dynamodb-example
     events:
