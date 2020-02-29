@@ -10,7 +10,7 @@ import (
 	"github.com/slack-go/slack"
 )
 
-func TestUserHome(t *testing.T) {
+func TestHomeBasicSections(t *testing.T) {
 	expectedJson := heredoc.Doc(`
 		{
 			"type": "home",
@@ -41,6 +41,22 @@ func TestUserHome(t *testing.T) {
 				},
 				{
 					"type": "divider"
+				},
+				{
+					"type": "section",
+					"fields": [
+						{
+							"type": "mrkdwn",
+							"text": "*Current Quarter*\n(ends in 42 days)\nNumber of slack messages: 42\nEvil messages: 24\nImproved messages with DSE: 12/24"
+						},
+						{
+							"type": "mrkdwn",
+							"text": "*Top Channels with evil messages*\n:airplane: General · 30% (142)\n:taxi: Code Reviews · 66% (43)\n:knife_fork_plate: Direct Messages · 18% (75)"
+						}
+					]
+				},
+				{
+					"type": "divider"
 				}
 			]
 		}
@@ -53,7 +69,8 @@ func TestUserHome(t *testing.T) {
 		fmt.Println("error:", err)
 	}
 
-	var actual slack.Message = UserHome("Cyril")
+	actual := slack.NewBlockMessage(HomeBasicSections("Cyril")...)
+	actual.Msg.Type = "home"
 
 	if diff := deep.Equal(expectedObject, actual); diff != nil {
 		t.Error(diff)
