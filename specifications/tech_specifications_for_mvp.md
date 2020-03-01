@@ -2,13 +2,13 @@ Conventions to help cover [the first specs of DSE](https://docs.google.com/docum
 
 ## Conventions
 
-- snake_case in DB for attribute names
-- CamelCase (first letter uppercase) for collection/table names
+- `snake_case` in DB for attribute names
+- `CamelCase` (first letter uppercase) for collection/table names
 
 Notes :
+- This is only meant to be pseudo code, as long as you understand it's fine
 - the MessageVersions could be embedded in the Message, or available as a separate collection (and we need a foreign key ID)
 - Some attributes could be denormalized directly in the DB for easier querying (or we could use some cache system, or not denormalize at all, TBD)
-- This is only meant to be pseudo code, as long as you understand it's fine
 
 ## Collections
 
@@ -21,7 +21,7 @@ Message
 - `versions` []MessageVersion - required (there should always be at least one version)
 - `all_messages_analyzed` boolean - required default false (true if all versions analyzed - denormalized attribute)
 - `last_message_quality` - optional default nil (denormalized attribute))
-- `improved` - boolean or nil default nil (at least one message_version improved regarding a previous one)
+- `improved` - boolean or nil default nil indexed (at least one message_version improved regarding a previous one)
 - `number_of_edits_before_improved` integer - optional (number of messages separating the first bad version from the last good version. Leave nil if there are no bad message versions)
 
 MessageVersion
@@ -30,7 +30,7 @@ MessageVersion
 - `written_at` - required (date when message version was written)
 - `text` String - required
 - `analyzed` Boolean
-- `quality` Float - required when Sentiment is defined
+- `quality` Float indexed - required when Sentiment is defined
 - `sentiment` Map{Negative: Float, Positive:Float} optional
 - `bad_quality_notified_on_slack` Boolean, default nil
 
@@ -45,11 +45,11 @@ Service ProcessIncomingUserMessage
 
 Service ProcessNLPResults
 - Change a message_version `analyzed`, `sentiment`, and sets the resulting `quality`
-- updates a message global stats `lastMessageQuality`, `all_messages_analyzed`, `improved`, `improved`, `number_of_edits_before_improved`
+- updates a message global stats `lastMessageQuality`, `all_messages_analyzed`, `improved`, `number_of_edits_before_improved`
 - if the quality is under the given threshold, trigger `NotifyUserOfBadMessageQuality`
 
 Service NotifyUserOfBadMessageQuality
-- Set `bad_quality_notified_on_slack` to true on the associated messageVersion after a successful POST
+- Set `bad_quality_notified_on_slack` to true on the associated messageVersion after a successful feedback to the user (a slack private message via POST)
 
 Service HomeStats
 - # of Total des messages Analyzed par DSE --> `MessageVersion.count`
