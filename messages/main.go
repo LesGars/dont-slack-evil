@@ -20,7 +20,8 @@ import (
 // https://serverless.com/framework/docs/providers/aws/events/apigateway/#lambda-proxy-integration
 type Response events.APIGatewayProxyResponse
 
-var slackOauthToken = os.Getenv("SLACK_OAUTH_TOKEN")
+var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
+var slackSigningSecret = os.Getenv("SLACK_SIGNING_SECRET")
 var api = slack.New(slackOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
@@ -32,7 +33,7 @@ func Handler(ctx context.Context, body []byte) (Response, error) {
 			"Content-Type": "application/json",
 		},
 	}
-	eventsAPIEvent, e := slackevents.ParseEvent(json.RawMessage(body), slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackOauthToken}))
+	eventsAPIEvent, e := slackevents.ParseEvent(json.RawMessage(body), slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackSigningSecret}))
 	if e != nil {
 		resp.StatusCode = 500
 	}
