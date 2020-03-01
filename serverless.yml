@@ -43,7 +43,7 @@ functions:
           path: messages
           method: post
     environment:
-      SLACK_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_OAUTH_TOKEN}
+      SLACK_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_OAUTH_ACCESS_TOKEN}
       SLACK_SIGNING_SECRET: ${self:custom.secrets.SLACK_SIGNING_SECRET}
   dynamodbExample:
     handler: bin/dynamodb-example
