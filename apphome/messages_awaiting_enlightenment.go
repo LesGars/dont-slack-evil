@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/slack-go/slack"
@@ -43,7 +44,8 @@ func EnlightenmentMessages() []slack.Block {
 }
 
 func parseTestMessages() []Message {
-	file := path.Join(os.Getenv("GOPATH"), "apphome/sample.json")
+	_, filename, _, _ := runtime.Caller(1)
+	file := path.Join(path.Dir(filename), "../data/sample.json")
 
 	jsonFile, err := os.Open(file)
 	if err != nil {
