@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
-	"runtime"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/slack-go/slack"
@@ -30,11 +28,13 @@ func EnlightenmentSection() []slack.Block {
 
 	blocks := []slack.Block{messagesSection, slack.NewDividerBlock()}
 
-	return append(blocks, EnlightenmentMessages()...)
+	// Note here we are not using .. for the path to the json file
+	// we assume we are running this code from the lambda function and the root folder that contains /bin and /data
+	return append(blocks, EnlightenmentMessages("data/sample.json")...)
 }
 
-func EnlightenmentMessages() []slack.Block {
-	messages := parseTestMessages()
+func EnlightenmentMessages(jsonFilePath string) []slack.Block {
+	messages := parseTestMessages(jsonFilePath)
 	var blocks []slack.Block
 
 	for _, message := range messages {
@@ -43,14 +43,14 @@ func EnlightenmentMessages() []slack.Block {
 	return blocks
 }
 
-func parseTestMessages() []Message {
-	_, filename, _, _ := runtime.Caller(1)
-	file := path.Join(path.Dir(filename), "../data/sample.json")
-
-	jsonFile, err := os.Open(file)
+func parseTestMessages(jsonFilePath string) []Message {
+	// _, filename, _, _ := runtime.Caller(1)
+	// file := path.Join(path.Dir(filename), "../data/sample.json")
+	jsonFile, err := os.Open(jsonFilePath)
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	defer jsonFile.Close()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
 	log.Printf("Messages read from JSON: %s", byteValue)
