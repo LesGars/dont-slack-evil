@@ -69,17 +69,16 @@ func Handler(request Request) (Response, error) {
 		case *slackevents.AppHomeOpenedEvent:
 			log.Println("Reacting to app home request event")
 			resp.StatusCode = 200
-			_, publishViewError := botApi.PublishView(
-				ev.User,
-				slack.HomeTabViewRequest{
-					Type:   "home",
-					Blocks: apphome.UserHome("Cyril").Blocks,
-				},
-				ev.View.Hash,
-			)
+			homeViewForUser := slack.HomeTabViewRequest{
+				Type:   "home",
+				Blocks: apphome.UserHome("Cyril").Blocks,
+			}
+			homeViewAsJson, _ := json.Marshal(homeViewForUser)
+			log.Printf("Sending view %s", homeViewAsJson)
+			_, publishViewError := botApi.PublishView(ev.User, homeViewForUser, ev.View.Hash)
 			if publishViewError != nil {
 				resp.StatusCode = 500
-				log.Printf("Error while posting message %s", publishViewError)
+				log.Println(publishViewError)
 			}
 		}
 	}

@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"path"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/slack-go/slack"
@@ -22,7 +24,7 @@ type Message struct {
 }
 
 func EnlightenmentSection() []slack.Block {
-	messagesText := slack.NewTextBlockObject("mrkdwn", "*Messages Awaiting Englightnment*", true, false)
+	messagesText := slack.NewTextBlockObject("mrkdwn", "*Messages Awaiting Englightnment*", false, false)
 	messagesSection := slack.NewSectionBlock(messagesText, nil, nil)
 
 	blocks := []slack.Block{messagesSection, slack.NewDividerBlock()}
@@ -41,12 +43,15 @@ func EnlightenmentMessages() []slack.Block {
 }
 
 func parseTestMessages() []Message {
-	jsonFile, err := os.Open("sample.json")
+	file := path.Join(os.Getenv("GOPATH"), "apphome/sample.json")
+
+	jsonFile, err := os.Open(file)
 	if err != nil {
 		fmt.Println(err)
 	}
 	defer jsonFile.Close()
 	byteValue, _ := ioutil.ReadAll(jsonFile)
+	log.Printf("Messages read from JSON: %s", byteValue)
 
 	var messages []Message
 	json.Unmarshal([]byte(byteValue), &messages)
