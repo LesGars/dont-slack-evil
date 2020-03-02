@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"os"
 	"fmt"
+	"os"
 
 	"dont-slack-evil/apphome"
 
@@ -59,8 +59,9 @@ func Handler(request Request) (Response, error) {
 	}
 	if eventsAPIEvent.Type == slackevents.CallbackEvent {
 		innerEvent := eventsAPIEvent.InnerEvent
+
 		switch ev := innerEvent.Data.(type) {
-		case *slackevents.AppMentionEvent:
+		case *slackevents.MessageEvent:
 			api.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
 		case *slackevents.AppHomeOpenedEvent:
 			api.PublishView(
