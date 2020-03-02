@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 
@@ -61,14 +60,14 @@ func Handler(request Request) (Response, error) {
 		switch ev := innerEvent.Data.(type) {
 		case *slackevents.AppMentionEvent:
 			resp.StatusCode = 200
-			fmt.Printf("Reacting to app mention event from channel %s", ev.Channel)
+			log.Printf("Reacting to app mention event from channel %s", ev.Channel)
 			_, _, postError := botApi.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
 			if postError != nil {
 				resp.StatusCode = 500
 				log.Printf("Error while posting message %s", postError)
 			}
 		case *slackevents.AppHomeOpenedEvent:
-			fmt.Println("Reacting to app home request event")
+			log.Println("Reacting to app home request event")
 			resp.StatusCode = 200
 			_, publishViewError := botApi.PublishView(
 				ev.User,
