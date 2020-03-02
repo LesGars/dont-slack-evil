@@ -44,7 +44,7 @@ functions:
           method: post
     environment:
       SLACK_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_OAUTH_ACCESS_TOKEN}
-      SLACK_SIGNING_SECRET: ${self:custom.secrets.SLACK_SIGNING_SECRET}
+      SLACK_VERIFICATION_TOKEN: ${self:custom.secrets.SLACK_VERIFICATION_TOKEN}
   dynamodbExample:
     handler: bin/dynamodb-example
     events:
