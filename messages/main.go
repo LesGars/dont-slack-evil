@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"fmt"
 
 	"dont-slack-evil/apphome"
 
@@ -40,6 +41,7 @@ func Handler(request Request) (Response, error) {
 		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}))
 
 	if e != nil {
+		fmt.Println(e)
 		resp.StatusCode = 500
 	}
 
@@ -47,6 +49,7 @@ func Handler(request Request) (Response, error) {
 		var r *slackevents.ChallengeResponse
 		err := json.Unmarshal(body, &r)
 		if err != nil {
+			fmt.Println(err)
 			resp.StatusCode = 500
 		}
 		resp.Headers["Content-Type"] = "text"
