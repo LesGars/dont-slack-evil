@@ -23,7 +23,7 @@ type Response events.APIGatewayProxyResponse
 type Request events.APIGatewayProxyRequest
 
 var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
-var slackSigningSecret = os.Getenv("SLACK_SIGNING_SECRET")
+var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
 var api = slack.New(slackOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
@@ -37,7 +37,8 @@ func Handler(request Request) (Response, error) {
 		},
 	}
 	eventsAPIEvent, e := slackevents.ParseEvent(json.RawMessage(body),
-		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackSigningSecret}))
+		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}))
+
 	if e != nil {
 		resp.StatusCode = 500
 	}
