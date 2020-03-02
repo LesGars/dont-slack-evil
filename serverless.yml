@@ -8,7 +8,8 @@ provider:
 
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-example
-  iamRoleStatements:
+    PD_API_URL: ${self:custom.secrets.PD_API_URL}
+    PD_API_KEY: ${self:custom.secrets.PD_API_KEY}
     - Effect: Allow
       Action:
         - dynamodb:CreateTable
