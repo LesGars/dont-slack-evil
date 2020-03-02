@@ -36,6 +36,7 @@ func Handler(request Request) (Response, error) {
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},
+		StatusCode: 200,
 	}
 	eventsAPIEvent, e := slackevents.ParseEvent(json.RawMessage(body),
 		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}))
