@@ -24,10 +24,10 @@ type Response events.APIGatewayProxyResponse
 type Request events.APIGatewayProxyRequest
 
 var slackBotUserOauthToken = os.Getenv("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
-var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
 var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
 var botApi = slack.New(slackBotUserOauthToken)
 
+// var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
 // var regularApi = slack.New(slackOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
