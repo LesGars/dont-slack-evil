@@ -12,7 +12,8 @@ func UserHome(userId string) slack.Message {
 	message := slack.NewBlockMessage(
 		append(
 			HomeBasicSections(name),
-			EnlightenmentSection()...,
+			// Commented until we figure out how to bundle the json with the lambda handler
+			// EnlightenmentSection()...,
 		)...,
 	)
 	message.Msg.Type = "home"
