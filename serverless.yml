@@ -25,6 +25,7 @@ package:
     - ./**
   include:
     - ./bin/**
+    - ./data/**
 
 custom:
   secrets: ${file(secrets.${opt:stage, self:provider.stage}.yml)}
@@ -39,6 +40,16 @@ functions:
     environment:
       PD_API_URL: ${self:custom.secrets.PD_API_URL}
       PD_API_KEY: ${self:custom.secrets.PD_API_KEY}
+  messages:
+    handler: bin/messages
+    events:
+      - http:
+          path: messages
+          method: post
+    environment:
+      SLACK_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_OAUTH_ACCESS_TOKEN}
+      SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN}
+      SLACK_VERIFICATION_TOKEN: ${self:custom.secrets.SLACK_VERIFICATION_TOKEN}
   dynamodbExample:
     handler: bin/dynamodb-example
     events:
