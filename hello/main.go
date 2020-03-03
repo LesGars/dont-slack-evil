@@ -24,10 +24,7 @@ func Handler(ctx context.Context) (Response, error) {
 	message := "Go Serverless v1.0! Your function executed successfully!"
 
 	sentimentAnalysis := nlp.GetSentiment(message, apiURL, apiKey)
-	jsonBody, err := json.Marshal(map[string]interface{}{
-	  "message": sentimentAnalysis.Sentiment,
-	  "sentiment": sentimentAnalysis.Message,
-	})
+	jsonBody, err := json.Marshal(sentimentAnalysis)
 	if err != nil {
 	  return Response{StatusCode: 404}, err
 	}
