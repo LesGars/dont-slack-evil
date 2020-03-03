@@ -14,16 +14,19 @@ type SentimentAnalysis struct {
 }
 
 // GetSentiment computes a percentage of happy/neutral/sad for a given string
-func GetSentiment(message string, apiURL string, apiKey string) SentimentAnalysis {
+func GetSentiment(message string, apiURL string, apiKey string) (SentimentAnalysis, error) {
 	// Get sentiment of message
 	form := url.Values{}
 	form.Add("text", message)
 	form.Add("api_key", apiKey)
-	resp, _ := http.Post(
+	resp, err := http.Post(
 		apiURL + "/v4/sentiment",
 		"application/x-www-form-urlencoded",
 		strings.NewReader(form.Encode()),
 	)
+	if (err != nil) {
+		return SentimentAnalysis{}, err
+	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 
@@ -32,5 +35,5 @@ func GetSentiment(message string, apiURL string, apiKey string) SentimentAnalysi
 		Message: message,
 	}
 
-	return responseBody
+	return responseBody, nil
 }
