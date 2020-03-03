@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"context"
-	"fmt"
 	"os"
 
 	"dont-slack-evil/nlp"
