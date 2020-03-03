@@ -1,9 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
+	"context"
+	"os"
+
+	"dont-slack-evil/nlp"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,27 +19,27 @@ type Response events.APIGatewayProxyResponse
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(ctx context.Context) (Response, error) {
-	var buf bytes.Buffer
+	apiKey := os.Getenv("PD_API_KEY")
+	apiURL := os.Getenv("PD_API_URL")
+	message := "Go Serverless v1.0! Your function executed successfully!"
 
-	body, err := json.Marshal(map[string]interface{}{
-		"message": "Go Serverless v1.0! Your function executed successfully!",
-	})
-	if err != nil {
-		return Response{StatusCode: 404}, err
+	sentimentAnalysis, sentimentError := nlp.GetSentiment(message, apiURL, apiKey)
+	if sentimentError != nil {
+	  return Response{StatusCode: 500}, sentimentError
 	}
-	json.HTMLEscape(&buf, body)
+	jsonBody, err := json.Marshal(sentimentAnalysis)
+	if err != nil {
+	  return Response{StatusCode: 404}, err
+	}
 
-	resp := Response{
+	return Response{
 		StatusCode:      200,
 		IsBase64Encoded: false,
-		Body:            buf.String(),
+		Body:            string(jsonBody),
 		Headers: map[string]string{
 			"Content-Type":           "application/json",
-			"X-MyCompany-Func-Reply": "hello-handler",
 		},
-	}
-
-	return resp, nil
+	}, nil
 }
 
 func main() {

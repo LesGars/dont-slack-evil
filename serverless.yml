@@ -37,6 +37,9 @@ functions:
       - http:
           path: hello
           method: get
+    environment:
+      PD_API_URL: ${self:custom.secrets.PD_API_URL}
+      PD_API_KEY: ${self:custom.secrets.PD_API_KEY}
   messages:
     handler: bin/messages
     events:
