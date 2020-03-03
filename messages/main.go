@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 
 	"dont-slack-evil/apphome"
@@ -23,14 +23,20 @@ type Response events.APIGatewayProxyResponse
 // Request is of type APIGatewayProxyRequest
 type Request events.APIGatewayProxyRequest
 
-var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
 var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
-var api = slack.New(slackOauthToken)
+
+// If you need to send a message from the app's "bot user", use this bot client
+var slackBotUserOauthToken = os.Getenv("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
+var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
+
+// If you need anything else, use this client instead
+// var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
+// var slackRegularApiClient = slack.New(slackOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request Request) (Response, error) {
-	buf := new(bytes.Buffer)
 	body := []byte(request.Body)
+	log.Printf("Receiving request body %s", body)
 	resp := Response{
 		IsBase64Encoded: false,
 		Headers: map[string]string{
@@ -38,41 +44,65 @@ func Handler(request Request) (Response, error) {
 		},
 		StatusCode: 200,
 	}
-	eventsAPIEvent, e := slackevents.ParseEvent(json.RawMessage(body),
-		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}))
+	eventsAPIEvent, e := slackevents.ParseEvent(
+		json.RawMessage(body),
+		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}),
+	)
 
 	if e != nil {
-		fmt.Println(e)
+		log.Println("Could not parse Slack event :'(")
 		resp.StatusCode = 500
 	}
+	log.Printf("Processing an event of outer type %s", eventsAPIEvent.Type)
 
-	if eventsAPIEvent.Type == slackevents.Message {
+	handleSlackChallenge(eventsAPIEvent, body, resp)
+
+	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
+		innerEvent := eventsAPIEvent.InnerEvent
+		log.Printf("Processing an event of inner data %s", innerEvent.Data)
+		switch ev := innerEvent.Data.(type) {
+		case *slackevents.AppMentionEvent:
+			resp.StatusCode = 200
+			log.Printf("Reacting to app mention event from channel %s", ev.Channel)
+			_, _, postError := slackBotUserApiClient.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
+			if postError != nil {
+				resp.StatusCode = 500
+				log.Printf("Error while posting message %s", postError)
+			}
+		case *slackevents.AppHomeOpenedEvent:
+			log.Println("Reacting to app home request event")
+			resp.StatusCode = 200
+			homeViewForUser := slack.HomeTabViewRequest{
+				Type:   "home",
+				Blocks: apphome.UserHome("Cyril").Blocks,
+			}
+			homeViewAsJson, _ := json.Marshal(homeViewForUser)
+			log.Printf("Sending view %s", homeViewAsJson)
+			_, publishViewError := slackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
+			if publishViewError != nil {
+				resp.StatusCode = 500
+				log.Println(publishViewError)
+			}
+		}
+	}
+	return resp, nil
+}
+
+// Slack Challenge is used to register the URL in the slack API config interface
+// Should only be used once by slack when changing the events URL
+func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte, resp Response) {
+	if eventsAPIEvent.Type == slackevents.URLVerification {
+		buf := new(bytes.Buffer)
 		var r *slackevents.ChallengeResponse
 		err := json.Unmarshal(body, &r)
 		if err != nil {
-			fmt.Println(err)
 			resp.StatusCode = 500
 		}
 		resp.Headers["Content-Type"] = "text"
+		resp.StatusCode = 200
 		buf.Write([]byte(r.Challenge))
 		resp.Body = buf.String()
 	}
-	if eventsAPIEvent.Type == slackevents.CallbackEvent {
-		innerEvent := eventsAPIEvent.InnerEvent
-
-		switch ev := innerEvent.Data.(type) {
-		case *slackevents.MessageEvent:
-			api.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
-		case *slackevents.AppHomeOpenedEvent:
-			api.PublishView(
-				ev.User,
-				slack.HomeTabViewRequest{"home", apphome.UserHome("Cyril").Blocks, "", "", ""},
-				ev.View.Hash)
-		}
-	}
-
-	return resp, nil
-
 }
 
 func main() {

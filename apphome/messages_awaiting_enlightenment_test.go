@@ -63,7 +63,9 @@ func TestEnlightenmentMessages(t *testing.T) {
 		fmt.Println("error:", err)
 	}
 
-	actual := slack.NewBlockMessage(EnlightenmentMessages()...)
+	// Note here we are using .. to back to root folder :
+	// we assume we are running this code from the VScode/specs and this file function
+	actual := slack.NewBlockMessage(EnlightenmentMessages("../data/sample.json")...)
 	actual.Msg.Type = "home"
 
 	if diff := deep.Equal(expectedObject, actual); diff != nil {
