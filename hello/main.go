@@ -39,7 +39,6 @@ func Handler(ctx context.Context) (Response, error) {
 		Body:            string(jsonBody),
 		Headers: map[string]string{
 			"Content-Type":           "application/json",
-			"X-MyCompany-Func-Reply": "hello-handler",
 		},
 	}, nil
 }
