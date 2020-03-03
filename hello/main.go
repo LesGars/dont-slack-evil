@@ -1,14 +1,12 @@
 package main
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
-	"net/url"
+	"context"
+	"fmt"
 	"os"
-	"strings"
+
+	"dont-slack-evil/nlp"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -22,37 +20,23 @@ type Response events.APIGatewayProxyResponse
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(ctx context.Context) (Response, error) {
-	var buf bytes.Buffer
-
 	apiKey := os.Getenv("PD_API_KEY")
 	apiURL := os.Getenv("PD_API_URL")
 	message := "Go Serverless v1.0! Your function executed successfully!"
 
-	// Get sentiment of message
-	form := url.Values{}
-	form.Add("text", message)
-	form.Add("api_key", apiKey)
-	resp, _ := http.Post(
-		apiURL + "/v4/sentiment",
-		"application/x-www-form-urlencoded",
-		strings.NewReader(form.Encode()),
-	)
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-
-	responseBody, err := json.Marshal(map[string]interface{}{
-		"message": message,
-		"sentiment": string(body),
+	sentimentAnalysis := nlp.GetSentiment(message, apiURL, apiKey)
+	jsonBody, err := json.Marshal(map[string]interface{}{
+	  "message": sentimentAnalysis.Sentiment,
+	  "sentiment": sentimentAnalysis.Message,
 	})
 	if err != nil {
-		return Response{StatusCode: 404}, err
+	  return Response{StatusCode: 404}, err
 	}
-	json.HTMLEscape(&buf, responseBody)
 
 	return Response{
 		StatusCode:      200,
 		IsBase64Encoded: false,
-		Body:            string(responseBody),
+		Body:            string(jsonBody),
 		Headers: map[string]string{
 			"Content-Type":           "application/json",
 			"X-MyCompany-Func-Reply": "hello-handler",
