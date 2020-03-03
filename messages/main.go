@@ -23,12 +23,15 @@ type Response events.APIGatewayProxyResponse
 // Request is of type APIGatewayProxyRequest
 type Request events.APIGatewayProxyRequest
 
-var slackBotUserOauthToken = os.Getenv("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
 var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
-var botApi = slack.New(slackBotUserOauthToken)
 
+// If you need to send a message from the app's "bot user", use this bot client
+var slackBotUserOauthToken = os.Getenv("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
+var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
+
+// If you need anything else, use this client instead
 // var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
-// var regularApi = slack.New(slackOauthToken)
+// var slackRegularApiClient = slack.New(slackOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request Request) (Response, error) {
@@ -61,7 +64,7 @@ func Handler(request Request) (Response, error) {
 		case *slackevents.AppMentionEvent:
 			resp.StatusCode = 200
 			log.Printf("Reacting to app mention event from channel %s", ev.Channel)
-			_, _, postError := botApi.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
+			_, _, postError := slackBotUserApiClient.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
 			if postError != nil {
 				resp.StatusCode = 500
 				log.Printf("Error while posting message %s", postError)
@@ -75,7 +78,7 @@ func Handler(request Request) (Response, error) {
 			}
 			homeViewAsJson, _ := json.Marshal(homeViewForUser)
 			log.Printf("Sending view %s", homeViewAsJson)
-			_, publishViewError := botApi.PublishView(ev.User, homeViewForUser, ev.View.Hash)
+			_, publishViewError := slackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
 			if publishViewError != nil {
 				resp.StatusCode = 500
 				log.Println(publishViewError)

@@ -44,8 +44,6 @@ func EnlightenmentMessages(jsonFilePath string) []slack.Block {
 }
 
 func parseTestMessages(jsonFilePath string) []Message {
-	// _, filename, _, _ := runtime.Caller(1)
-	// file := path.Join(path.Dir(filename), "../data/sample.json")
 	jsonFile, err := os.Open(jsonFilePath)
 	if err != nil {
 		fmt.Println(err)
