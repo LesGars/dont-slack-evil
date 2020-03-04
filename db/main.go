@@ -80,7 +80,6 @@ func Update(tableName string, slackMessageId string, sentiment Sentiment) bool {
 	}
 
 	input := &dynamodb.UpdateItemInput{
-		// ExpressionAttributeValues: expr,
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":updated_sentiment": {
 				M: expr,
