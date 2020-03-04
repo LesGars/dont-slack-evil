@@ -7,11 +7,12 @@ import (
 	"os"
 
 	"dont-slack-evil/apphome"
+	dsedb "dont-slack-evil/db"
 	"dont-slack-evil/nlp"
-	"dont-slack-evil/db"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/fatih/structs"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
@@ -115,17 +116,19 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 func storeMessage(message *slackevents.MessageEvent, resp *Response) {
 	// Create DB
 	tableName := os.Getenv("DYNAMODB_TABLE")
-	dbError := db.CreateDBIfNotCreated(tableName)
+	dbError := dsedb.CreateDBIfNotCreated(tableName)
 	if dbError {
 		resp.StatusCode = 500
 	}
 
 	// Save in DB
 	messageBytes, _ := json.Marshal(message)
-	dbItem := make(map[string]string)
-	dbItem["id"] = message.Text + string(message.EventTimeStamp)
+	dbItem := dsedb.Message{
+		UserId: message.User,
+		Id:     message.Text + string(message.EventTimeStamp),
+	}
 	json.Unmarshal(messageBytes, &dbItem)
-	dbResult := db.Store(tableName, dbItem)
+	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
 		log.Println("Could not store message in DB")
 	} else {
@@ -143,7 +146,7 @@ func getSentiment(message *slackevents.MessageEvent, resp *Response) {
 		log.Println("Could not analyze message")
 		resp.StatusCode = 500
 	}
-	dbResult := db.Update(tableName, message.Text + string(message.EventTimeStamp), sentimentAnalysis.Sentiment)
+	dbResult := dsedb.Update(tableName, message.Text+string(message.EventTimeStamp), sentimentAnalysis.Sentiment)
 	if !dbResult {
 		log.Println("Could not update message with sentiment")
 	} else {

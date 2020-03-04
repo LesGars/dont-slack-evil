@@ -10,14 +10,15 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-// CreateDBIfNotCreated creates DynamoDB table if it doesn't exist
-func CreateDBIfNotCreated(tableName string) bool {
-	// Create DynamoDB client
+func DynamoDBClient() *dynamodb.DynamoDB {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	svc := dynamodb.New(sess)
+	return dynamodb.New(sess)
+}
 
+// CreateDBIfNotCreated creates DynamoDB table if it doesn't exist
+func CreateDBIfNotCreated(tableName string) bool {
 	createTableInput := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
@@ -31,14 +32,14 @@ func CreateDBIfNotCreated(tableName string) bool {
 				KeyType:       aws.String("HASH"),
 			},
 		},
-		TableName: aws.String(tableName),
+		TableName:   aws.String(tableName),
 		BillingMode: aws.String("PAY_PER_REQUEST"),
 	}
-	_, createTableErr := svc.CreateTable(createTableInput)
+	_, createTableErr := DynamoDBClient().CreateTable(createTableInput)
 	if createTableErr != nil {
-		if (!strings.Contains(createTableErr.Error(), "Table already exists")) {
+		if !strings.Contains(createTableErr.Error(), "Table already exists") {
 			log.Println(createTableErr.Error())
-			return false;
+			return false
 		}
 	} else {
 		log.Println("Created the table", tableName)
@@ -47,12 +48,7 @@ func CreateDBIfNotCreated(tableName string) bool {
 }
 
 // Store an item in the database
-func Store(tableName string, item map[string]string) bool {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	svc := dynamodb.New(sess)
-
+func Store(tableName string, item map[string]interface{}) bool {
 	av, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
 		log.Println("Got error marshalling new item:")
@@ -63,7 +59,7 @@ func Store(tableName string, item map[string]string) bool {
 		Item:      av,
 		TableName: aws.String(tableName),
 	}
-	_, err = svc.PutItem(putItemInput)
+	_, err = DynamoDBClient().PutItem(putItemInput)
 	if err != nil {
 		log.Println("Got error calling PutItem:")
 		log.Println(err.Error())
@@ -74,48 +70,38 @@ func Store(tableName string, item map[string]string) bool {
 
 // Update an item in the database
 func Update(tableName string, id string, sentiment string) bool {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	svc := dynamodb.New(sess)
-
 	input := &dynamodb.UpdateItemInput{
-			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-					":r": {
-							S: aws.String(sentiment),
-					},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":r": {
+				S: aws.String(sentiment),
 			},
-			TableName: aws.String(tableName),
-			Key: map[string]*dynamodb.AttributeValue{
-					"id": {
-							S: aws.String(id),
-					},
+		},
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"id": {
+				S: aws.String(id),
 			},
-			ReturnValues:     aws.String("UPDATED_NEW"),
-			UpdateExpression: aws.String("set sentiment = :r"),
+		},
+		ReturnValues:     aws.String("UPDATED_NEW"),
+		UpdateExpression: aws.String("set sentiment = :r"),
 	}
 
-	_, err := svc.UpdateItem(input)
+	_, err := DynamoDBClient().UpdateItem(input)
 	if err != nil {
-			log.Println(err.Error())
-			return false
+		log.Println(err.Error())
+		return false
 	}
 	return true
 }
 
 // Get an item in the database
-func Get(tableName string, id string) (*dynamodb.GetItemOutput, error){
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	svc := dynamodb.New(sess)
-
-	return svc.GetItem(&dynamodb.GetItemInput{
+func Get(tableName string, id string) (*dynamodb.GetItemOutput, error) {
+	return DynamoDBClient().GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-				"id": {
-						S: aws.String(id),
-				},
+			"id": {
+				S: aws.String(id),
+			},
 		},
 	})
 }
