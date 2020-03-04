@@ -58,7 +58,9 @@ func Handler(request Request) (Response, error) {
 	log.Printf("Processing an event of outer type %s", eventsAPIEvent.Type)
 
 	handleSlackChallenge(eventsAPIEvent, body, &resp)
-	analyzeAndStore(eventsAPIEvent, &resp)
+
+	message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+	storeMessage(message, &resp)
 
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
@@ -108,18 +110,7 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 	}
 }
 
-func analyzeAndStore(eventsAPIEvent slackevents.EventsAPIEvent, resp *Response) {
-	// Get NLP sentiment
-	messageEvent := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
-	apiKey := os.Getenv("PD_API_KEY")
-	apiURL := os.Getenv("PD_API_URL")
-	message := messageEvent.Text
-	sentimentAnalysis, sentimentError := nlp.GetSentiment(message, apiURL, apiKey)
-	if sentimentError != nil {
-		log.Println("Could not analyze message")
-		resp.StatusCode = 500
-	}
-
+func storeMessage(message *slackevents.MessageEvent, resp *Response) {
 	// Create DB
 	tableName := os.Getenv("DYNAMODB_TABLE")
 	dbError := db.CreateDBIfNotCreated(tableName)
@@ -128,6 +119,27 @@ func analyzeAndStore(eventsAPIEvent slackevents.EventsAPIEvent, resp *Response) 
 	}
 
 	// Save in DB
+	messageBytes, _ := json.Marshal(message)
+	dbItem := make(map[string]string)
+	dbItem["id"] = message.Text + string(message.EventTimeStamp)
+	json.Unmarshal(messageBytes, &dbItem)
+	dbResult := db.Store(tableName, dbItem)
+	if !dbResult {
+		log.Println("Could not store message in DB")
+	} else {
+		log.Println("Message was stored successfully")
+	}
+}
+
+func getSentiment(message *slackevents.MessageEvent, resp *Response) {
+	apiKey := os.Getenv("PD_API_KEY")
+	apiURL := os.Getenv("PD_API_URL")
+	text := message.Text
+	sentimentAnalysis, sentimentError := nlp.GetSentiment(text, apiURL, apiKey)
+	if sentimentError != nil {
+		log.Println("Could not analyze message")
+		resp.StatusCode = 500
+	}
 	log.Println(sentimentAnalysis)
 }
 
