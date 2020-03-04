@@ -55,7 +55,7 @@ func Handler(request Request) (Response, error) {
 	}
 	log.Printf("Processing an event of outer type %s", eventsAPIEvent.Type)
 
-	handleSlackChallenge(eventsAPIEvent, body, resp)
+	handleSlackChallenge(eventsAPIEvent, body, &resp)
 
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
@@ -90,7 +90,7 @@ func Handler(request Request) (Response, error) {
 
 // Slack Challenge is used to register the URL in the slack API config interface
 // Should only be used once by slack when changing the events URL
-func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte, resp Response) {
+func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte, resp *Response) {
 	if eventsAPIEvent.Type == slackevents.URLVerification {
 		buf := new(bytes.Buffer)
 		var r *slackevents.ChallengeResponse
