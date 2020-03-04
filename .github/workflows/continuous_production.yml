@@ -11,11 +11,8 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: 1.13
-        id: go
-
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
-
       - name: Get dependencies
         run: |
           go get -v -t -d ./...
@@ -33,6 +30,10 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/master'
     steps:
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
       - name: Install AWS Cli
@@ -46,6 +47,19 @@ jobs:
         run: |
           aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID --profile dont-slack-evil-hackaton
           aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY --profile dont-slack-evil-hackaton
+      - name: Create secrets file
+        run: |
+          echo "SLACK_OAUTH_ACCESS_TOKEN: $SLACK_OAUTH_ACCESS_TOKEN" >> secrets.dev.yml
+          echo "SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: $SLACK_BOT_USER_OAUTH_ACCESS_TOKEN" >> secrets.dev.yml
+          echo "SLACK_VERIFICATION_TOKEN: $SLACK_VERIFICATION_TOKEN" >> secrets.dev.yml
+          echo "PD_API_URL: $PD_API_URL" >> secrets.dev.yml
+          echo "PD_API_KEY: $PD_API_KEY" >> secrets.dev.yml
+        env:
+          SLACK_OAUTH_ACCESS_TOKEN: ${{ secrets.SLACK_OAUTH_ACCESS_TOKEN }}
+          SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: ${{ secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN }}
+          SLACK_VERIFICATION_TOKEN: ${{ secrets.SLACK_VERIFICATION_TOKEN }}
+          PD_API_URL: ${{ secrets.PD_API_URL }}
+          PD_API_KEY: ${{ secrets.PD_API_KEY }}
       - name: serverless deploy
         run: |
           export PATH=$PATH:$HOME/.serverless/bin
