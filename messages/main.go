@@ -115,7 +115,6 @@ func analyzeAndStore(eventsAPIEvent slackevents.EventsAPIEvent, resp *Response) 
 	apiURL := os.Getenv("PD_API_URL")
 	message := messageEvent.Text
 	sentimentAnalysis, sentimentError := nlp.GetSentiment(message, apiURL, apiKey)
-	log.Println(sentimentError)
 	if sentimentError != nil {
 		log.Println("Could not analyze message")
 		resp.StatusCode = 500
