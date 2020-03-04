@@ -7,7 +7,7 @@ provider:
   profile: dont-slack-evil-hackaton
 
   environment:
-    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-example
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-messages
   iamRoleStatements:
     - Effect: Allow
       Action:
