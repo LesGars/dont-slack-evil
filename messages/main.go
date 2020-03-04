@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"dont-slack-evil/apphome"
+	"dont-slack-evil/nlp"
+	"dont-slack-evil/db"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -56,6 +58,7 @@ func Handler(request Request) (Response, error) {
 	log.Printf("Processing an event of outer type %s", eventsAPIEvent.Type)
 
 	handleSlackChallenge(eventsAPIEvent, body, &resp)
+	analyzeAndStore(eventsAPIEvent, &resp)
 
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
@@ -103,6 +106,30 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 		buf.Write([]byte(r.Challenge))
 		resp.Body = buf.String()
 	}
+}
+
+func analyzeAndStore(eventsAPIEvent slackevents.EventsAPIEvent, resp *Response) {
+	// Get NLP sentiment
+	messageEvent := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+	apiKey := os.Getenv("PD_API_KEY")
+	apiURL := os.Getenv("PD_API_URL")
+	message := messageEvent.Text
+	sentimentAnalysis, sentimentError := nlp.GetSentiment(message, apiURL, apiKey)
+	log.Println(sentimentError)
+	if sentimentError != nil {
+		log.Println("Could not analyze message")
+		resp.StatusCode = 500
+	}
+
+	// Create DB
+	tableName := os.Getenv("DYNAMODB_TABLE")
+	dbError := db.CreateDBIfNotCreated(tableName)
+	if dbError {
+		resp.StatusCode = 500
+	}
+
+	// Save in DB
+	log.Println(sentimentAnalysis)
 }
 
 func main() {
