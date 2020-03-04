@@ -46,7 +46,7 @@ func CreateDBIfNotCreated(tableName string) bool {
 	return true
 }
 
-// Store stores an item in the database
+// Store an item in the database
 func Store(tableName string, item map[string]string) bool {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -70,4 +70,52 @@ func Store(tableName string, item map[string]string) bool {
 		return false
 	}
 	return true
+}
+
+// Update an item in the database
+func Update(tableName string, id string, sentiment string) bool {
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	svc := dynamodb.New(sess)
+
+	input := &dynamodb.UpdateItemInput{
+			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+					":r": {
+							S: aws.String(sentiment),
+					},
+			},
+			TableName: aws.String(tableName),
+			Key: map[string]*dynamodb.AttributeValue{
+					"id": {
+							S: aws.String(id),
+					},
+			},
+			ReturnValues:     aws.String("UPDATED_NEW"),
+			UpdateExpression: aws.String("set sentiment = :r"),
+	}
+
+	_, err := svc.UpdateItem(input)
+	if err != nil {
+			log.Println(err.Error())
+			return false
+	}
+	return true
+}
+
+// Get an item in the database
+func Get(tableName string, id string) (*dynamodb.GetItemOutput, error){
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	svc := dynamodb.New(sess)
+
+	return svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+				"id": {
+						S: aws.String(id),
+				},
+		},
+	})
 }

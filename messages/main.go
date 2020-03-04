@@ -62,6 +62,8 @@ func Handler(request Request) (Response, error) {
 	message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
 	storeMessage(message, &resp)
 
+	getSentiment(message, &resp)
+
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
 		log.Printf("Processing an event of inner data %s", innerEvent.Data)
@@ -132,6 +134,7 @@ func storeMessage(message *slackevents.MessageEvent, resp *Response) {
 }
 
 func getSentiment(message *slackevents.MessageEvent, resp *Response) {
+	tableName := os.Getenv("DYNAMODB_TABLE")
 	apiKey := os.Getenv("PD_API_KEY")
 	apiURL := os.Getenv("PD_API_URL")
 	text := message.Text
@@ -140,7 +143,12 @@ func getSentiment(message *slackevents.MessageEvent, resp *Response) {
 		log.Println("Could not analyze message")
 		resp.StatusCode = 500
 	}
-	log.Println(sentimentAnalysis)
+	dbResult := db.Update(tableName, message.Text + string(message.EventTimeStamp), sentimentAnalysis.Sentiment)
+	if !dbResult {
+		log.Println("Could not update message with sentiment")
+	} else {
+		log.Println("Message was updated successfully with sentiment")
+	}
 }
 
 func main() {
