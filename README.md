@@ -23,7 +23,16 @@ Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack Ap
 * [golang](https://golang.org/dl/) >= 1.13
 * [direnv](https://direnv.net/) (if you are not using VSCode)
 
+# Updating env variables
+
+Currently if you need to update environment variables you need to
+- update `example.secrets.dev.yml`
+- update `secrets.dev.yml`, the actual env file
+- update `serverless.yml` to inject the env variable where it is needed
+- update the "Create secrets file" section of `continuous_production.yml` to create the env file in CI
+
 # Setting up your Go environment
+
 ## If you are using VSCode
 
 * Install the Go extension. When prompted, install the necessary *Go Tools* (`golint`, `goreturns`, `gopls`)
