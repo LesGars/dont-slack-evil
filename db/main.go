@@ -22,13 +22,13 @@ func CreateDBIfNotCreated(tableName string) bool {
 	createTableInput := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
-				AttributeName: aws.String("id"),
+				AttributeName: aws.String("slack_message_id"),
 				AttributeType: aws.String("S"),
 			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
-				AttributeName: aws.String("id"),
+				AttributeName: aws.String("slack_message_id"),
 				KeyType:       aws.String("HASH"),
 			},
 		},
@@ -69,26 +69,34 @@ func Store(tableName string, item map[string]interface{}) bool {
 }
 
 // Update an item in the database
-func Update(tableName string, id string, sentiment string) bool {
+func Update(tableName string, slackMessageId string, sentiment Sentiment) bool {
+	expr, err := dynamodbattribute.MarshalMap(sentiment)
+	if err != nil {
+		log.Println("Got error marshalling info:")
+		log.Println(err.Error())
+		return false
+	}
+
 	input := &dynamodb.UpdateItemInput{
+		// ExpressionAttributeValues: expr,
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":r": {
-				S: aws.String(sentiment),
+			":updated_sentiment": {
+				M: expr,
 			},
 		},
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
-				S: aws.String(id),
+			"slack_message_id": {
+				S: aws.String(slackMessageId),
 			},
 		},
 		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("set sentiment = :r"),
+		UpdateExpression: aws.String("set sentiment = :updated_sentiment"),
 	}
 
-	_, err := DynamoDBClient().UpdateItem(input)
-	if err != nil {
-		log.Println(err.Error())
+	_, updateErr := DynamoDBClient().UpdateItem(input)
+	if updateErr != nil {
+		log.Println(updateErr.Error())
 		return false
 	}
 	return true
@@ -99,7 +107,7 @@ func Get(tableName string, id string) (*dynamodb.GetItemOutput, error) {
 	return DynamoDBClient().GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-			"id": {
+			"slack_message_id": {
 				S: aws.String(id),
 			},
 		},

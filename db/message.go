@@ -1,13 +1,14 @@
 package db
 
 type Message struct {
-	Id             string  `json:"id"`
-	UserId         string  `json:"user_id"`
-	SlackMessageId string  `json:"slack_message_id"`
-	Analyzed       bool    `json:"analyzed"`
-	CreatedAt      string  `json:"created_at"`
-	Quality        float64 `json:"quality"`
-	Sentiment      Sentiment
+	UserId         string    `json:"user_id"`
+	SlackMessageId string    `json:"slack_message_id"`
+	SlackThreadId  string    `json:"slack_thread_id"`
+	Text           string    `json:"text"`
+	Analyzed       bool      `json:"analyzed"`
+	CreatedAt      string    `json:"created_at"`
+	Quality        float64   `json:"quality"`
+	Sentiment      Sentiment `json:"sentiment"`
 }
 
 type Sentiment struct {

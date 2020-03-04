@@ -38,6 +38,7 @@ var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request Request) (Response, error) {
+	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
 	body := []byte(request.Body)
 	log.Printf("Receiving request body %s", body)
 	resp := Response{
@@ -124,10 +125,15 @@ func storeMessage(message *slackevents.MessageEvent, resp *Response) {
 	// Save in DB
 	messageBytes, _ := json.Marshal(message)
 	dbItem := dsedb.Message{
-		UserId: message.User,
-		Id:     message.Text + string(message.EventTimeStamp),
+		UserId:         message.User,
+		Text:           message.Text,
+		CreatedAt:      message.EventTimeStamp.String(),
+		SlackMessageId: message.EventTimeStamp.String(),
+		SlackThreadId:  message.ThreadTimeStamp,
 	}
 	json.Unmarshal(messageBytes, &dbItem)
+	log.Println(structs.Map(&dbItem))
+
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
 		log.Println("Could not store message in DB")
@@ -146,7 +152,7 @@ func getSentiment(message *slackevents.MessageEvent, resp *Response) {
 		log.Println("Could not analyze message")
 		resp.StatusCode = 500
 	}
-	dbResult := dsedb.Update(tableName, message.Text+string(message.EventTimeStamp), sentimentAnalysis.Sentiment)
+	dbResult := dsedb.Update(tableName, message.EventTimeStamp.String(), sentimentAnalysis.Sentiment)
 	if !dbResult {
 		log.Println("Could not update message with sentiment")
 	} else {
