@@ -1,28 +1,14 @@
 package apphome
 
 import (
-	dsedb "dont-slack-evil/db"
-	"log"
-	"strconv"
 	"testing"
 
-	"github.com/fatih/structs"
 	"github.com/go-test/deep"
 )
 
 func TestHomeStatsForUser(t *testing.T) {
-	for count := 0; count <= 2; count++ {
-		msg := dsedb.Message{
-			UserId:         "42",
-			SlackMessageId: strconv.Itoa(count),
-		}
-		log.Printf("Next step is to send %s to DynamoDB", structs.Values(msg))
-		// dsedb.Store(
-		// 	os.Getenv("DYNAMODB_TABLE"),
-		// 	structs.Map(&msg),
-		// )
-	}
-
+	// Stats correspond to arbitrary messages that were seeded in the test DB
+	// Using https://snippets.cacher.io/snippet/3ae7dcb2e44370bf4dfc
 	expectedObject := DSEHomeStats{50, 27, 0.54, 0, 0, 0}
 	actual := HomeStatsForUser("Alissa Kutch")
 
