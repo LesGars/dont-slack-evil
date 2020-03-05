@@ -7,9 +7,12 @@ import (
 	"os"
 
 	"dont-slack-evil/apphome"
+	dsedb "dont-slack-evil/db"
+	"dont-slack-evil/nlp"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/fatih/structs"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
@@ -35,6 +38,7 @@ var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request Request) (Response, error) {
+	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
 	body := []byte(request.Body)
 	log.Printf("Receiving request body %s", body)
 	resp := Response{
@@ -55,7 +59,12 @@ func Handler(request Request) (Response, error) {
 	}
 	log.Printf("Processing an event of outer type %s", eventsAPIEvent.Type)
 
-	handleSlackChallenge(eventsAPIEvent, body, resp)
+	handleSlackChallenge(eventsAPIEvent, body, &resp)
+
+	message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+	storeMessage(message, &resp)
+
+	getSentiment(message, &resp)
 
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
@@ -90,7 +99,7 @@ func Handler(request Request) (Response, error) {
 
 // Slack Challenge is used to register the URL in the slack API config interface
 // Should only be used once by slack when changing the events URL
-func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte, resp Response) {
+func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte, resp *Response) {
 	if eventsAPIEvent.Type == slackevents.URLVerification {
 		buf := new(bytes.Buffer)
 		var r *slackevents.ChallengeResponse
@@ -102,6 +111,52 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 		resp.StatusCode = 200
 		buf.Write([]byte(r.Challenge))
 		resp.Body = buf.String()
+	}
+}
+
+func storeMessage(message *slackevents.MessageEvent, resp *Response) {
+	// Create DB
+	tableName := os.Getenv("DYNAMODB_TABLE")
+	dbError := dsedb.CreateDBIfNotCreated(tableName)
+	if dbError {
+		resp.StatusCode = 500
+	}
+
+	// Save in DB
+	messageBytes, _ := json.Marshal(message)
+	dbItem := dsedb.Message{
+		UserId:         message.User,
+		Text:           message.Text,
+		CreatedAt:      message.EventTimeStamp.String(),
+		SlackMessageId: message.EventTimeStamp.String(),
+		SlackThreadId:  message.ThreadTimeStamp,
+	}
+	json.Unmarshal(messageBytes, &dbItem)
+	log.Println(structs.Map(&dbItem))
+
+	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
+	if !dbResult {
+		log.Println("Could not store message in DB")
+	} else {
+		log.Println("Message was stored successfully")
+	}
+}
+
+func getSentiment(message *slackevents.MessageEvent, resp *Response) {
+	tableName := os.Getenv("DYNAMODB_TABLE")
+	apiKey := os.Getenv("PD_API_KEY")
+	apiURL := os.Getenv("PD_API_URL")
+	text := message.Text
+	sentimentAnalysis, sentimentError := nlp.GetSentiment(text, apiURL, apiKey)
+	if sentimentError != nil {
+		log.Println("Could not analyze message")
+		resp.StatusCode = 500
+	}
+	dbResult := dsedb.Update(tableName, message.EventTimeStamp.String(), sentimentAnalysis.Sentiment)
+	if !dbResult {
+		log.Println("Could not update message with sentiment")
+	} else {
+		log.Println("Message was updated successfully with sentiment")
 	}
 }
 
