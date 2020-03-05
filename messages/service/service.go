@@ -60,6 +60,11 @@ func HandleEvent(body []byte) (string, error) {
 		}
 	}
 
+	message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+	storeMessage(message, &resp)
+
+	getSentiment(message, &resp)
+
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
 		log.Printf("Processing an event of inner data %s", innerEvent.Data)
@@ -104,3 +109,50 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 	buf.Write([]byte(r.Challenge))
 	return buf.String(), err
 }
+
+func storeMessage(message *slackevents.MessageEvent, resp *Response) {
+	// Create DB
+	tableName := os.Getenv("DYNAMODB_TABLE")
+	dbError := dsedb.CreateDBIfNotCreated(tableName)
+	if dbError {
+		resp.StatusCode = 500
+	}
+
+	// Save in DB
+	messageBytes, _ := json.Marshal(message)
+	dbItem := dsedb.Message{
+		UserId:         message.User,
+		Text:           message.Text,
+		CreatedAt:      message.EventTimeStamp.String(),
+		SlackMessageId: message.EventTimeStamp.String(),
+		SlackThreadId:  message.ThreadTimeStamp,
+	}
+	json.Unmarshal(messageBytes, &dbItem)
+	log.Println(structs.Map(&dbItem))
+
+	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
+	if !dbResult {
+		log.Println("Could not store message in DB")
+	} else {
+		log.Println("Message was stored successfully")
+	}
+}
+
+func getSentiment(message *slackevents.MessageEvent, resp *Response) {
+	tableName := os.Getenv("DYNAMODB_TABLE")
+	apiKey := os.Getenv("PD_API_KEY")
+	apiURL := os.Getenv("PD_API_URL")
+	text := message.Text
+	sentimentAnalysis, sentimentError := nlp.GetSentiment(text, apiURL, apiKey)
+	if sentimentError != nil {
+		log.Println("Could not analyze message")
+		resp.StatusCode = 500
+	}
+	dbResult := dsedb.Update(tableName, message.EventTimeStamp.String(), sentimentAnalysis.Sentiment)
+	if !dbResult {
+		log.Println("Could not update message with sentiment")
+	} else {
+		log.Println("Message was updated successfully with sentiment")
+	}
+}
+

@@ -6,6 +6,16 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"dont-slack-evil/messages/service"
+	"os"
+
+	"dont-slack-evil/apphome"
+	dsedb "dont-slack-evil/db"
+	"dont-slack-evil/nlp"
+
+	"github.com/fatih/structs"
+	"github.com/slack-go/slack"
+	"github.com/slack-go/slack/slackevents"
+
 )
 
 // Response is of type APIGatewayProxyResponse since we're leveraging the
@@ -19,6 +29,7 @@ type Request events.APIGatewayProxyRequest
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request Request) (Response, error) {
+	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
 	body := []byte(request.Body)
 	log.Printf("Receiving request body %s", body)
 	resp := Response{
@@ -39,6 +50,7 @@ func Handler(request Request) (Response, error) {
 	
 	return resp, nil
 }
+
 
 func main() {
 	lambda.Start(Handler)
