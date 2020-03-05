@@ -24,10 +24,23 @@ var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
 // var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
 // var slackRegularApiClient = slack.New(slackOauthToken)
 
+
+// ParseEvent is the assignation of slackevents.ParseEvent to a variable,
+// in order to make it mockable
+var ParseEvent = slackevents.ParseEvent
+
+// ParseEvent is the assignation of slackBotUserApiClient.PostMessage to a variable,
+// in order to make it mockable
+var PostMessage = slackBotUserApiClient.PostMessage
+
+// PublishView is the assignation of slackBotUserApiClient.PublishView to a variable,
+// in order to make it mockable
+var PublishView = slackBotUserApiClient.PublishView 
+
 // HandleEvent uses Slack's Event API to respond to an event emitted by our application
 func HandleEvent(body []byte) (string, error) {
 	var challengeResponse string
-	eventsAPIEvent, e := slackevents.ParseEvent(
+	eventsAPIEvent, e := ParseEvent(
 		json.RawMessage(body),
 		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}),
 	)
@@ -53,7 +66,7 @@ func HandleEvent(body []byte) (string, error) {
 		switch ev := innerEvent.Data.(type) {
 		case *slackevents.AppMentionEvent:
 			log.Printf("Reacting to app mention event from channel %s", ev.Channel)
-			_, _, postError := slackBotUserApiClient.PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
+			_, _, postError := PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
 			if postError != nil {
 				message := fmt.Sprintf("Error while posting message %s", postError)
 				log.Printf(message)
@@ -67,7 +80,7 @@ func HandleEvent(body []byte) (string, error) {
 			}
 			homeViewAsJson, _ := json.Marshal(homeViewForUser)
 			log.Printf("Sending view %s", homeViewAsJson)
-			_, publishViewError := slackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
+			_, publishViewError := PublishView(ev.User, homeViewForUser, ev.View.Hash)
 			if publishViewError != nil {
 				log.Println(publishViewError)
 				return "", publishViewError
@@ -86,6 +99,7 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 	e := json.Unmarshal(body, &r)
 	if e != nil {
 		err = errors.New("Unable to register the URL")
+		return "", err
 	}
 	buf.Write([]byte(r.Challenge))
 	return buf.String(), err
