@@ -30,7 +30,9 @@ func HomeStatsForUser(userId string) DSEHomeStats {
 		MessagesAnalyzedAllTime:     messagesAnalyzed(userIdFilt),
 		MessagesOfBadQualityAllTime: messagesAnalyzed(expression.And(badQualityFilt, userIdFilt)),
 	}
-	stats.PercentageOfMessagesOfBadQualityAllTime = float64(stats.MessagesOfBadQualityAllTime) / float64(stats.MessagesAnalyzedAllTime)
+	if stats.MessagesAnalyzedAllTime != 0 {
+		stats.PercentageOfMessagesOfBadQualityAllTime = float64(stats.MessagesOfBadQualityAllTime) / float64(stats.MessagesAnalyzedAllTime)
+	}
 	return stats
 }
 

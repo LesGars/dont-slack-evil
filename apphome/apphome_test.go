@@ -47,7 +47,7 @@ func TestHomeBasicSections(t *testing.T) {
 					"fields": [
 						{
 							"type": "mrkdwn",
-							"text": "*Current Quarter*\n(ends in 42 days)\nNumber of slack messages: 42\nEvil messages: 24\nImproved messages with DSE: 12/24"
+							"text": "*All time*\nNumber of analyzed messages: 0\nNumber of messages of bad quality : 0\n% of messages of bad quality : 0.000000\n*Current Quarter*\n(ends in 42 days)\nNumber of analyzed messages: 0\nNumber of messages of bad quality : 0\n% of messages of bad quality : 0.000000"
 						},
 						{
 							"type": "mrkdwn",
