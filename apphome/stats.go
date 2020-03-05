@@ -13,28 +13,32 @@ import (
 var thresholdQuality float64 = 0.5
 
 type DSEHomeStats struct {
-	TotalMessagesAnalyzed            int     `json:"userName"`
-	MessagesOfBadQuality             int     `json:"messagesOfBadQuality"`
-	PercentageOfMessagesOfBadQuality float64 `json:"percentageOfMessagesOfBadQuality"`
+	MessagesAnalyzedAllTime                 int     `json:"messagesAnalyzedAllTime"`
+	MessagesOfBadQualityAllTime             int     `json:"messagesOfBadQualityAllTime"`
+	PercentageOfMessagesOfBadQualityAllTime float64 `json:"percentageOfMessagesOfBadQualityAllTime"`
+
+	MessagesAnalyzedLastQuarter                 int     `json:"messagesAnalyzedLastQuarter"`
+	MessagesOfBadQualityLastQuarter             int     `json:"messagesOfBadQualityLastQuarter"`
+	PercentageOfMessagesOfBadQualityLastQuarter float64 `json:"percentageOfMessagesOfBadQualityLastQuarter"`
 }
 
 func HomeStatsForUser(userId string) DSEHomeStats {
 	userIdFilt := userIdFilt(userId)
 	return DSEHomeStats{
-		TotalMessagesAnalyzed: totalNumberOfMessages(userIdFilt),
+		MessagesAnalyzedAllTime: messagesAnalyzed(userIdFilt),
 	}
 }
 
 func userIdFilt(userId string) expression.ConditionBuilder {
-	return expression.Equal(expression.Name("userId"), expression.Value(userId))
+	return expression.Equal(expression.Name("user_id"), expression.Value(userId))
 }
 
-func totalNumberOfMessages(userIdFilt expression.ConditionBuilder) int {
-	filt := expression.And(
-		expression.GreaterThanEqual(expression.Name("quality"), expression.Value(thresholdQuality)),
-		userIdFilt,
-	)
-	expr, buildErr := expression.NewBuilder().WithFilter(filt).Build()
+func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
+	// filt := expression.And(
+	// 	// expression.GreaterThanEqual(expression.Name("quality"), expression.Value(thresholdQuality)),
+	// 	userIdFilt,
+	// )
+	expr, buildErr := expression.NewBuilder().WithFilter(userIdFilt).Build()
 	if buildErr != nil {
 		log.Println("Got error building expression:")
 		log.Println(buildErr.Error())
@@ -49,6 +53,7 @@ func totalNumberOfMessages(userIdFilt expression.ConditionBuilder) int {
 	}
 
 	val, err := dsedb.ScanToInt(dsedb.Scan(input))
+
 	if err != nil {
 		return 0
 	}

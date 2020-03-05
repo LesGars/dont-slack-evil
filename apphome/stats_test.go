@@ -16,17 +16,17 @@ func TestHomeStatsForUser(t *testing.T) {
 			UserId:         "42",
 			SlackMessageId: strconv.Itoa(count),
 		}
-		log.Printf("Next step is to send %s to DYnamoDB", structs.Values(msg))
+		log.Printf("Next step is to send %s to DynamoDB", structs.Values(msg))
 		// dsedb.Store(
 		// 	os.Getenv("DYNAMODB_TABLE"),
 		// 	structs.Map(&msg),
 		// )
 	}
 
-	expectedObject := DSEHomeStats{3, 0, 0}
-	actual := HomeStatsForUser("42")
+	expectedObject := DSEHomeStats{50, 0, 0, 0, 0, 0}
+	actual := HomeStatsForUser("Alissa Kutch")
 
 	if diff := deep.Equal(expectedObject, actual); diff != nil {
-		// t.Error(diff)
+		t.Error(diff)
 	}
 }

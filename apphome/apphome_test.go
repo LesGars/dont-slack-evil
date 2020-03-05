@@ -69,7 +69,7 @@ func TestHomeBasicSections(t *testing.T) {
 		fmt.Println("error:", err)
 	}
 
-	actual := slack.NewBlockMessage(HomeBasicSections("Cyril")...)
+	actual := slack.NewBlockMessage(HomeBasicSections("Cyril", "42")...)
 	actual.Msg.Type = "home"
 
 	if diff := deep.Equal(expectedObject, actual); diff != nil {
