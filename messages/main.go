@@ -61,15 +61,16 @@ func Handler(request Request) (Response, error) {
 
 	handleSlackChallenge(eventsAPIEvent, body, &resp)
 
-	message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
-	storeMessage(message, &resp)
-
-	getSentiment(message, &resp)
-
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
 		log.Printf("Processing an event of inner data %s", innerEvent.Data)
 		switch ev := innerEvent.Data.(type) {
+		case *slackevents.MessageEvent:
+			resp.StatusCode = 200
+			log.Printf("Reacting to message event from channel %s", ev.Channel)
+			message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+			storeMessage(message, &resp)
+			getSentiment(message, &resp)
 		case *slackevents.AppMentionEvent:
 			resp.StatusCode = 200
 			log.Printf("Reacting to app mention event from channel %s", ev.Channel)
