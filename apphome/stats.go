@@ -49,10 +49,6 @@ func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {
 }
 
 func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
-	// filt := expression.And(
-	// 	// expression.GreaterThanEqual(expression.Name("quality"), expression.Value(thresholdQuality)),
-	// 	userIdFilt,
-	// )
 	expr, buildErr := expression.NewBuilder().WithFilter(userIdFilt).Build()
 	if buildErr != nil {
 		log.Println("Got error building expression:")
