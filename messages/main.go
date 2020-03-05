@@ -81,17 +81,24 @@ func Handler(request Request) (Response, error) {
 			}
 		case *slackevents.AppHomeOpenedEvent:
 			log.Println("Reacting to app home request event")
-			resp.StatusCode = 200
-			homeViewForUser := slack.HomeTabViewRequest{
-				Type:   "home",
-				Blocks: apphome.UserHome("Cyril").Blocks,
-			}
-			homeViewAsJson, _ := json.Marshal(homeViewForUser)
-			log.Printf("Sending view %s", homeViewAsJson)
-			_, publishViewError := slackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
-			if publishViewError != nil {
+			homeOpened := eventsAPIEvent.InnerEvent.Data.(*slackevents.AppHomeOpenedEvent)
+			user, getUserInfoErr := slackBotUserApiClient.GetUserInfo(homeOpened.User)
+			if getUserInfoErr != nil {
+				log.Println(getUserInfoErr)
 				resp.StatusCode = 500
-				log.Println(publishViewError)
+			} else {
+				resp.StatusCode = 200
+				homeViewForUser := slack.HomeTabViewRequest{
+					Type:   "home",
+					Blocks: apphome.UserHome(user.RealName).Blocks,
+				}
+				// homeViewAsJson, _ := json.Marshal(homeViewForUser)
+				// log.Printf("Sending view %s", homeViewAsJson)
+				_, publishViewError := slackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
+				if publishViewError != nil {
+					resp.StatusCode = 500
+					log.Println(publishViewError)
+				}
 			}
 		}
 	}
