@@ -23,7 +23,7 @@ func TestHomeStatsForUser(t *testing.T) {
 		// )
 	}
 
-	expectedObject := DSEHomeStats{50, 0, 0, 0, 0, 0}
+	expectedObject := DSEHomeStats{50, 27, 0.54, 0, 0, 0}
 	actual := HomeStatsForUser("Alissa Kutch")
 
 	if diff := deep.Equal(expectedObject, actual); diff != nil {
