@@ -11,7 +11,7 @@ func UserHome(userId string) slack.Message {
 	name := translateUserIdToUserName(userId)
 	message := slack.NewBlockMessage(
 		append(
-			HomeBasicSections(name),
+			HomeBasicSections(name, userId),
 			EnlightenmentSection()...,
 		)...,
 	)
@@ -20,10 +20,10 @@ func UserHome(userId string) slack.Message {
 	return message
 }
 
-func HomeBasicSections(userName string) []slack.Block {
+func HomeBasicSections(userName string, userId string) []slack.Block {
 	return append(
 		introSections(userName),
-		statsSections()...,
+		statsSections(userId)...,
 	)
 }
 
@@ -44,19 +44,22 @@ func introSections(userName string) []slack.Block {
 	return []slack.Block{headerSection, helloSection, slack.NewDividerBlock()}
 }
 
-func statsSections() []slack.Block {
-	numberOfEvilMessages := 24
-	numberOfImprovedMessages := 12
-	numberOfSlackMessages := 42
-	daysLeftUntilQuarterEnd := 42
+func statsSections(userId string) []slack.Block {
+	stats := HomeStatsForUser(userId)
 	messageStats := slack.NewTextBlockObject("mrkdwn",
 		heredoc.Doc(fmt.Sprintf(`
+			*All time*
+			Number of analyzed messages: %d
+			Number of messages of bad quality : %d
+			%% of messages of bad quality : %f
 			*Current Quarter*
 			(ends in %d days)
-			Number of slack messages: %d
-			Evil messages: %d
-			Improved messages with DSE: %d/%d`,
-			daysLeftUntilQuarterEnd, numberOfSlackMessages, numberOfEvilMessages, numberOfImprovedMessages, numberOfEvilMessages,
+			Number of analyzed messages: %d
+			Number of messages of bad quality : %d
+			%% of messages of bad quality : %f`,
+			stats.MessagesAnalyzedAllTime, stats.MessagesOfBadQualityAllTime, stats.PercentageOfMessagesOfBadQualityAllTime,
+			42,
+			stats.MessagesAnalyzedLastQuarter, stats.MessagesOfBadQualityLastQuarter, stats.PercentageOfMessagesOfBadQualityLastQuarter,
 		)),
 		false, false,
 	)
