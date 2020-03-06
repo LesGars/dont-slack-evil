@@ -123,6 +123,12 @@ func TestHandleEvent_AppHomeOpenedFailure(t *testing.T) {
 			}, nil
 	}
 
+	olduserHome := userHome
+	defer func() { userHome = olduserHome }()
+	userHome = func(userId string) slack.Message {
+		return slack.Message{}
+	}
+
 	oldpublishView := publishView
 	defer func() { publishView = oldpublishView }()
 	publishViewError := errors.New("Error-Mock")
@@ -150,10 +156,16 @@ func TestHandleEvent_AppHomeOpenedSuccess(t *testing.T) {
 
 	oldpublishView := publishView
 	defer func() { publishView = oldpublishView }()
-
 	publishView = func(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
 		return nil, nil
 	}
+
+	olduserHome := userHome
+	defer func() { userHome = olduserHome }()
+	userHome = func(userId string) slack.Message {
+		return slack.Message{}
+	}
+	
 	resp, e := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
 
 	if resp != "" {

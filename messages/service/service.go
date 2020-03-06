@@ -11,12 +11,12 @@ import (
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
 	"dont-slack-evil/nlp"
+
 	"github.com/fatih/structs"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
-
 
 var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
 
@@ -28,7 +28,6 @@ var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
 // var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
 // var slackRegularApiClient = slack.New(slackOauthToken)
 
-
 // ParseEvent is the assignation of slackevents.ParseEvent to a variable,
 // in order to make it mockable
 var parseEvent = slackevents.ParseEvent
@@ -39,7 +38,9 @@ var postMessage = slackBotUserApiClient.PostMessage
 
 // PublishView is the assignation of slackBotUserApiClient.PublishView to a variable,
 // in order to make it mockable
-var publishView = slackBotUserApiClient.PublishView 
+var publishView = slackBotUserApiClient.PublishView
+
+var userHome = apphome.UserHome
 
 // HandleEvent uses Slack's Event API to respond to an event emitted by our application
 func HandleEvent(body []byte) (string, error) {
@@ -63,7 +64,7 @@ func HandleEvent(body []byte) (string, error) {
 			return "", challengeError
 		}
 	}
-		
+
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
 		log.Printf("Processing an event of inner data %s", innerEvent.Data)
@@ -92,7 +93,7 @@ func HandleEvent(body []byte) (string, error) {
 			log.Println("Reacting to app home request event")
 			homeViewForUser := slack.HomeTabViewRequest{
 				Type:   "home",
-				Blocks: apphome.UserHome("Cyril").Blocks,
+				Blocks: userHome("Cyril").Blocks,
 			}
 			homeViewAsJson, _ := json.Marshal(homeViewForUser)
 			log.Printf("Sending view %s", homeViewAsJson)
@@ -153,9 +154,9 @@ var storeMessage = func(message *slackevents.MessageEvent) error {
 		log.Println(errorMsg)
 		return errors.New(errorMsg)
 	}
-	
+
 	log.Println("Message was stored successfully")
-	
+
 	return nil
 }
 
@@ -178,4 +179,3 @@ var getSentiment = func(message *slackevents.MessageEvent) error {
 	}
 	return nil
 }
-

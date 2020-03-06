@@ -24,6 +24,11 @@ jobs:
         run: go build -v .
       - name: Run tests
         run: go test ./...
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          DYNAMODB_TABLE: dont-slack-evil-test-messages
+          AWS_REGION: us-east-1
   deploy:
     name: Serverless deploy master branch
     runs-on: ubuntu-latest
