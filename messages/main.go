@@ -6,15 +6,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"dont-slack-evil/messages/service"
-	"os"
-
-	"dont-slack-evil/apphome"
-	dsedb "dont-slack-evil/db"
-	"dont-slack-evil/nlp"
-
 	"github.com/fatih/structs"
-	"github.com/slack-go/slack"
-	"github.com/slack-go/slack/slackevents"
 
 )
 

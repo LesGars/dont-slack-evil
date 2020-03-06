@@ -10,10 +10,10 @@ import (
 )
 
 // If parseEvent fails, the handler should return an error
-func TestHandleEvent_ParseEventFailure(t *testing.T) {
-	old := ParseEvent
-	defer func() { ParseEvent = old }()
-	ParseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+func TestHandleEvent_parseEventFailure(t *testing.T) {
+	old := parseEvent
+	defer func() { parseEvent = old }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{}, errors.New("Error-Mock")
 	}
 	_, e := HandleEvent([]byte("abcd"))
@@ -27,9 +27,9 @@ func TestHandleEvent_ParseEventFailure(t *testing.T) {
 
 // If parseEvent returns an event of type URLVerification and the JSONification fails, the handler should return an error
 func TestHandleEvent_URLVerificationFailure(t *testing.T) {
-	old := ParseEvent
-	defer func() { ParseEvent = old }()
-	ParseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+	old := parseEvent
+	defer func() { parseEvent = old }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{Type: slackevents.URLVerification}, nil
 	}
 	_, e := HandleEvent([]byte("{{}"))
@@ -43,9 +43,9 @@ func TestHandleEvent_URLVerificationFailure(t *testing.T) {
 // If parseEvent returns an event of type URLVerification and the JSONification does not fail, the handler should return 
 // the challenge value and nil
 func TestHandleEvent_URLVerificationSuccess(t *testing.T) {
-	old := ParseEvent
-	defer func() { ParseEvent = old }()
-	ParseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+	old := parseEvent
+	defer func() { parseEvent = old }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{Type: slackevents.URLVerification}, nil
 	}
 	got, e := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
@@ -62,18 +62,18 @@ func TestHandleEvent_URLVerificationSuccess(t *testing.T) {
 
 // If parseEvent returns an event of type AppMentionEvent and the POST message fails, the handler should return an error
 func TestHandleEvent_AppMentionEventFailure(t *testing.T) {
-	oldParseEvent := ParseEvent
-	defer func() { ParseEvent = oldParseEvent }()
-	ParseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{
 			Type: slackevents.AppMention, 
 			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.AppMentionEvent{}},
 			}, nil
 	}
 
-	oldPostMessage := PostMessage
-	defer func() { PostMessage = oldPostMessage }()
-	PostMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
+	oldpostMessage := postMessage
+	defer func() { postMessage = oldpostMessage }()
+	postMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
 		return "", "", errors.New("Error-mock")
 	}
 	_, e := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
@@ -87,18 +87,18 @@ func TestHandleEvent_AppMentionEventFailure(t *testing.T) {
 
 // If parseEvent returns an event of type AppMentionEvent and the POST message succeeds, the handler should return nil and nil
 func TestHandleEvent_AppMentionEventSuccess(t *testing.T) {
-	oldParseEvent := ParseEvent
-	defer func() { ParseEvent = oldParseEvent }()
-	ParseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{
 			Type: slackevents.AppMention, 
 			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.AppMentionEvent{}},
 			}, nil
 	}
 
-	oldPostMessage := PostMessage
-	defer func() { PostMessage = oldPostMessage }()
-	PostMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
+	oldpostMessage := postMessage
+	defer func() { postMessage = oldpostMessage }()
+	postMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
 		return "", "", nil
 	}
 	resp, e := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
@@ -114,19 +114,19 @@ func TestHandleEvent_AppMentionEventSuccess(t *testing.T) {
 
 // If parseEvent returns an event of type AppHomeOpened and the POST message fails, the handler should return an error
 func TestHandleEvent_AppHomeOpenedFailure(t *testing.T) {
-	oldParseEvent := ParseEvent
-	defer func() { ParseEvent = oldParseEvent }()
-	ParseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{
 			Type: slackevents.CallbackEvent, 
 			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.AppHomeOpenedEvent{}},
 			}, nil
 	}
 
-	oldPublishView := PublishView
-	defer func() { PublishView = oldPublishView }()
+	oldpublishView := publishView
+	defer func() { publishView = oldpublishView }()
 	publishViewError := errors.New("Error-Mock")
-	PublishView = func(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
+	publishView = func(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
 		return nil, publishViewError
 	}
 	_, got := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
@@ -139,20 +139,107 @@ func TestHandleEvent_AppHomeOpenedFailure(t *testing.T) {
 
 // If parseEvent returns an event of type AppHomeOpened and the POST message succeeds, the handler should return nil-nil
 func TestHandleEvent_AppHomeOpenedSuccess(t *testing.T) {
-	oldParseEvent := ParseEvent
-	defer func() { ParseEvent = oldParseEvent }()
-	ParseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{
 			Type: slackevents.CallbackEvent, 
 			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.AppHomeOpenedEvent{}},
 			}, nil
 	}
 
-	oldPublishView := PublishView
-	defer func() { PublishView = oldPublishView }()
+	oldpublishView := publishView
+	defer func() { publishView = oldpublishView }()
 
-	PublishView = func(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
+	publishView = func(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
 		return nil, nil
+	}
+	resp, e := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+
+	if resp != "" {
+		t.Errorf("The handler should have returned no response. Instead it returned %v", resp)
+	}
+	if e != nil {
+		t.Errorf("The handler should not failed. It returned the following error %v", e)
+	}
+
+}
+
+// If parseEvent returns an event of type MessageEvent and storeMessage fails, the handler should return an error
+func TestHandleEvent_MessageEventStoreMessageFailure(t *testing.T) {
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+		return slackevents.EventsAPIEvent{
+			Type: slackevents.CallbackEvent, 
+			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.MessageEvent{}},
+			}, nil
+	}
+
+	oldstoreMessage := storeMessage
+	defer func() { storeMessage = oldstoreMessage }()
+	storeMessageError := errors.New("Error-Mock")
+	storeMessage = func(message *slackevents.MessageEvent) error {
+		return storeMessageError
+	}
+	_, got := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	want := storeMessageError
+	if got != want {
+		t.Errorf("The handler doesn't return the right error, got %v want %v", got, want)
+	}
+
+}
+
+// If parseEvent returns an event of type MessageEvent and getSentiment fails, the handler should return an error
+func TestHandleEvent_MessageEventGetSentimentFailure(t *testing.T) {
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+		return slackevents.EventsAPIEvent{
+			Type: slackevents.CallbackEvent, 
+			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.MessageEvent{}},
+			}, nil
+	}
+
+	oldstoreMessage := storeMessage
+	defer func() { storeMessage = oldstoreMessage }()
+	storeMessage = func(message *slackevents.MessageEvent) error {
+		return nil
+	}
+	oldgetSentiment := getSentiment
+	defer func() { getSentiment = oldgetSentiment }()
+	getSentimentError := errors.New("Error-Mock")
+	getSentiment = func(message *slackevents.MessageEvent) error {
+		return getSentimentError
+	}
+	_, got := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	want := getSentimentError
+	if got != want {
+		t.Errorf("The handler doesn't return the right error, got %v want %v", got, want)
+	}
+
+}
+
+// If parseEvent returns an event of type MessageEvent and storeMessage/getSentiment succeeds, the handler should return nil-nil
+func TestHandleEvent_MessageEventSuccess(t *testing.T) {
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+		return slackevents.EventsAPIEvent{
+			Type: slackevents.CallbackEvent, 
+			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.MessageEvent{}},
+			}, nil
+	}
+
+	oldstoreMessage := storeMessage
+	defer func() { storeMessage = oldstoreMessage }()
+	storeMessage = func(message *slackevents.MessageEvent) error {
+		return nil
+	}
+	oldgetSentiment := getSentiment
+	defer func() { getSentiment = oldgetSentiment }()
+	getSentiment = func(message *slackevents.MessageEvent) error {
+		return nil
 	}
 	resp, e := HandleEvent([]byte("{\"Challenge\": \"Challenge\"}"))
 

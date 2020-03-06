@@ -9,10 +9,14 @@ import (
 	"os"
 
 	"dont-slack-evil/apphome"
+	dsedb "dont-slack-evil/db"
+	"dont-slack-evil/nlp"
+	"github.com/fatih/structs"
 
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
+
 
 var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
 
@@ -27,20 +31,20 @@ var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
 
 // ParseEvent is the assignation of slackevents.ParseEvent to a variable,
 // in order to make it mockable
-var ParseEvent = slackevents.ParseEvent
+var parseEvent = slackevents.ParseEvent
 
 // ParseEvent is the assignation of slackBotUserApiClient.PostMessage to a variable,
 // in order to make it mockable
-var PostMessage = slackBotUserApiClient.PostMessage
+var postMessage = slackBotUserApiClient.PostMessage
 
 // PublishView is the assignation of slackBotUserApiClient.PublishView to a variable,
 // in order to make it mockable
-var PublishView = slackBotUserApiClient.PublishView 
+var publishView = slackBotUserApiClient.PublishView 
 
 // HandleEvent uses Slack's Event API to respond to an event emitted by our application
 func HandleEvent(body []byte) (string, error) {
 	var challengeResponse string
-	eventsAPIEvent, e := ParseEvent(
+	eventsAPIEvent, e := parseEvent(
 		json.RawMessage(body),
 		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}),
 	)
@@ -59,19 +63,26 @@ func HandleEvent(body []byte) (string, error) {
 			return "", challengeError
 		}
 	}
-
-	message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
-	storeMessage(message, &resp)
-
-	getSentiment(message, &resp)
-
+		
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		innerEvent := eventsAPIEvent.InnerEvent
 		log.Printf("Processing an event of inner data %s", innerEvent.Data)
 		switch ev := innerEvent.Data.(type) {
+		case *slackevents.MessageEvent:
+			log.Printf("Reacting to message event from channel %s", ev.Channel)
+			message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+			storeMsgError := storeMessage(message)
+			if storeMsgError != nil {
+				return "", storeMsgError
+			}
+
+			getSentimentError := getSentiment(message)
+			if getSentimentError != nil {
+				return "", getSentimentError
+			}
 		case *slackevents.AppMentionEvent:
 			log.Printf("Reacting to app mention event from channel %s", ev.Channel)
-			_, _, postError := PostMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
+			_, _, postError := postMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
 			if postError != nil {
 				message := fmt.Sprintf("Error while posting message %s", postError)
 				log.Printf(message)
@@ -85,7 +96,7 @@ func HandleEvent(body []byte) (string, error) {
 			}
 			homeViewAsJson, _ := json.Marshal(homeViewForUser)
 			log.Printf("Sending view %s", homeViewAsJson)
-			_, publishViewError := PublishView(ev.User, homeViewForUser, ev.View.Hash)
+			_, publishViewError := publishView(ev.User, homeViewForUser, ev.View.Hash)
 			if publishViewError != nil {
 				log.Println(publishViewError)
 				return "", publishViewError
@@ -110,16 +121,19 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 	return buf.String(), err
 }
 
-func storeMessage(message *slackevents.MessageEvent, resp *Response) {
+var storeMessage = func(message *slackevents.MessageEvent) error {
 	// Create DB
 	tableName := os.Getenv("DYNAMODB_TABLE")
 	dbError := dsedb.CreateDBIfNotCreated(tableName)
 	if dbError {
-		resp.StatusCode = 500
+		return errors.New("Database could not be created")
 	}
 
 	// Save in DB
-	messageBytes, _ := json.Marshal(message)
+	messageBytes, e := json.Marshal(message)
+	if e != nil {
+		return errors.New("Message could not be parsed before saving")
+	}
 	dbItem := dsedb.Message{
 		UserId:         message.User,
 		Text:           message.Text,
@@ -127,26 +141,34 @@ func storeMessage(message *slackevents.MessageEvent, resp *Response) {
 		SlackMessageId: message.EventTimeStamp.String(),
 		SlackThreadId:  message.ThreadTimeStamp,
 	}
-	json.Unmarshal(messageBytes, &dbItem)
+	unmarshalError := json.Unmarshal(messageBytes, &dbItem)
+	if unmarshalError != nil {
+		return errors.New("Message could not JSONified")
+	}
 	log.Println(structs.Map(&dbItem))
 
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
-		log.Println("Could not store message in DB")
-	} else {
-		log.Println("Message was stored successfully")
+		errorMsg := "Could not store message in DB"
+		log.Println(errorMsg)
+		return errors.New(errorMsg)
 	}
+	
+	log.Println("Message was stored successfully")
+	
+	return nil
 }
 
-func getSentiment(message *slackevents.MessageEvent, resp *Response) {
+var getSentiment = func(message *slackevents.MessageEvent) error {
 	tableName := os.Getenv("DYNAMODB_TABLE")
 	apiKey := os.Getenv("PD_API_KEY")
 	apiURL := os.Getenv("PD_API_URL")
 	text := message.Text
 	sentimentAnalysis, sentimentError := nlp.GetSentiment(text, apiURL, apiKey)
 	if sentimentError != nil {
-		log.Println("Could not analyze message")
-		resp.StatusCode = 500
+		errorMsg := "Could not analyze message"
+		log.Println(errorMsg)
+		return errors.New(errorMsg)
 	}
 	dbResult := dsedb.Update(tableName, message.EventTimeStamp.String(), sentimentAnalysis.Sentiment)
 	if !dbResult {
@@ -154,5 +176,6 @@ func getSentiment(message *slackevents.MessageEvent, resp *Response) {
 	} else {
 		log.Println("Message was updated successfully with sentiment")
 	}
+	return nil
 }
 
