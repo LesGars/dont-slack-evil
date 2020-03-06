@@ -16,6 +16,11 @@ Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack Ap
   aws_access_key_id=SECRET_FROM_CYRIL
   aws_secret_access_key=SECRET_FROM_CYRIL
   ```
+  - Add to your aws config file (`~/.aws/config`) the following:
+  ```
+  [profile dont-slack-evil-hackaton]
+  region=us-east-1
+  ```
 3) Set up secret file: `cp example.secrets.dev.yml secrets.dev.yml` and fill the secrets
 4) Deploy: `make deploy`
 
@@ -57,6 +62,25 @@ You can make use of the following extra properties:
 
 * `go.testOnSave: true` for triggering `go test` on each save (if autosave is disabled) or CTRL+S (if autosave is enabled)
 * `go.testOnSave: false` for deactivating build on each save
+
+### Setup tests
+
+Under Debug > open configurations, add the following ENV variables
+```
+"env": {
+  "DYNAMODB_TABLE": "dont-slack-evil-test-messages",
+  "AWS_REGION": "us-east-1"
+},
+```
+Under Code > Preferences > Settings, search for "testEnvVars" and add your vars again under settings
+```
+"settings": {
+  "go.testEnvVars": {
+    "DYNAMODB_TABLE": "dont-slack-evil-test-messages",
+    "AWS_REGION": "us-east-1"
+  },
+}
+```
 
 ## If you are using a regular text editor
 * `direnv` will execute the `.envrc` file and leverage the 2 env variables
@@ -117,7 +141,7 @@ serverless deploy
 ```
 ```bash
 # Logs the activity of a lambda
-serverless logs -t -f hello 
+serverless logs -t -f hello
 ```
 ```bash
 # Encrypt / Decrypt secrets
@@ -134,4 +158,3 @@ If `make deploy` fails:
 ```golang
 go get -u github.com/aws/aws-lambda-go/lambda
 ```
-
