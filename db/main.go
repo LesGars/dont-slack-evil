@@ -13,9 +13,6 @@ import (
 )
 
 func DynamoDBClient() *dynamodb.DynamoDB {
-	// sess := session.Must(session.NewSessionWithOptions(session.Options{
-	// 	SharedConfigState: session.SharedConfigEnable,
-	// }))
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.SharedCredentialsProvider{Profile: "dont-slack-evil-hackaton"},
@@ -127,10 +124,6 @@ func Get(tableName string, id string) (*dynamodb.GetItemOutput, error) {
 
 // Convert a DynamoDB scan output to an integer
 func ScanToInt(result *dynamodb.ScanOutput, err error) (int, error) {
-	// if err != nil {
-	// 	return 0, err
-	// }
-	// return strconv.Atoi(result.String())
 	return int(*result.Count), nil
 }
 
@@ -160,4 +153,14 @@ func Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func unmarshalScanResults(scanOutput *dynamodb.ScanOutput) []interface{} {
+	var recs []interface{}
+
+	resultsErr := dynamodbattribute.UnmarshalListOfMaps(scanOutput.Items, &recs)
+	if resultsErr != nil {
+		log.Printf("failed to unmarshal Dynamodb Scan Items, %v", resultsErr)
+	}
+	return recs
 }

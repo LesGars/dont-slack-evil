@@ -67,6 +67,7 @@ func Handler(request Request) (Response, error) {
 		switch ev := innerEvent.Data.(type) {
 		case *slackevents.MessageEvent:
 			message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
+			log.Printf("Analyzing new message sent in channel %s", ev.Channel)
 			storeMessage(message, &resp)
 			getSentiment(message, &resp)
 		case *slackevents.AppMentionEvent:
