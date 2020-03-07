@@ -31,7 +31,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	svc := dynamodb.New(sess)
 
 	// Create DynamoDB table if it doesn't exist
-	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "-teams"
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
 	createTableInput := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{

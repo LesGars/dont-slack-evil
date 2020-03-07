@@ -17,7 +17,7 @@ type Team struct {
 }
 
 func FindOrCreateTeamById(id string) (*Team, error) {
-	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "-teams"
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
 	// CreateTableIfNotCreated(tableName, "slack_team_id")
 
 	team, err := FindTeamById(id)
@@ -37,7 +37,7 @@ func FindOrCreateTeamById(id string) (*Team, error) {
 }
 
 func FindTeamById(id string) (*Team, error) {
-	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "-teams"
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
 	out, err := Get(tableName,
 		map[string]*dynamodb.AttributeValue{
 			"slack_team_id": {
