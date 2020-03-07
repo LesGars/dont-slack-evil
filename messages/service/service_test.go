@@ -125,7 +125,7 @@ func TestHandleEvent_AppHomeOpenedFailure(t *testing.T) {
 
 	olduserHome := userHome
 	defer func() { userHome = olduserHome }()
-	userHome = func(userId string) slack.Message {
+	userHome = func(userId string, userName string) slack.Message {
 		return slack.Message{}
 	}
 
@@ -162,7 +162,7 @@ func TestHandleEvent_AppHomeOpenedSuccess(t *testing.T) {
 
 	olduserHome := userHome
 	defer func() { userHome = olduserHome }()
-	userHome = func(userId string) slack.Message {
+	userHome = func(userId string, userName string) slack.Message {
 		return slack.Message{}
 	}
 	
