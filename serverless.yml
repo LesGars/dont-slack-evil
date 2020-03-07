@@ -58,3 +58,9 @@ functions:
       - http:
           path: dynamodb-example
           method: get
+  redirectUrl:
+    handler: bin/redirectUrl
+    events:
+      - http:
+          path: redirect-url
+          method: get
