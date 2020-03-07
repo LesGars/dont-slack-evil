@@ -121,7 +121,7 @@ var storeMessage = func(message *slackevents.MessageEvent) error {
 }
 
 var getSentiment = func(message *slackevents.MessageEvent) error {
-	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"
 	apiKey := os.Getenv("PD_API_KEY")
 	apiURL := os.Getenv("PD_API_URL")
 	text := message.Text
