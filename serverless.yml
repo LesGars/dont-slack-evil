@@ -52,6 +52,14 @@ functions:
       SLACK_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_OAUTH_ACCESS_TOKEN}
       SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN}
       SLACK_VERIFICATION_TOKEN: ${self:custom.secrets.SLACK_VERIFICATION_TOKEN}
+  notifications:
+    handler: bin/notifications
+    events:
+      - http:
+          path: notifications
+          method: get
+    environment:
+      SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN}
   dynamodbExample:
     handler: bin/dynamodb-example
     events:

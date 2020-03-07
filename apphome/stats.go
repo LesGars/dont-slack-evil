@@ -73,13 +73,13 @@ func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 }
 
 func userProj()	expression.ProjectionBuilder {
-	return expression.NamesList(expression.Name("UserId"))
+	return expression.NamesList(expression.Name("user_id"))
 }
 
-func usersWithBadQualityMessages() ([]string, error) {
+func UsersWithBadQualityMessages() ([]string, error) {
 	filter := expression.And(sinceBeginningOfQuarterFilt(), badQualityFilt())
 	proj := userProj()
-	expr, buildErr := expression.NewBuilder().WithFilter(filter).WithProjection(proj).Build()
+	expr, buildErr := expression.NewBuilder().WithProjection(proj).WithFilter(filter).Build()
 	if buildErr != nil {
 		log.Println("Got error building expression:")
 		log.Println(buildErr.Error())
@@ -90,20 +90,31 @@ func usersWithBadQualityMessages() ([]string, error) {
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
+		ProjectionExpression:	   expr.Projection(),
 		TableName:                 aws.String(os.Getenv("DYNAMODB_TABLE")),
 	}
+	type record struct {
+		UserId string `dynamodbav:"user_id"`
+	}
+	var records []record
 
-	var userIds []string
+	result, scanError := dsedb.Scan(&input)
 
-	result, _ := dsedb.Scan(&input)
+	if scanError != nil {
+		log.Println(scanError)
+		return []string{}, scanError
+	}
 
-	err := dynamodbattribute.UnmarshalListOfMaps(result.Items, &userIds)
+	err := dynamodbattribute.UnmarshalListOfMaps(result.Items, &records)
 
 	if err != nil {
 		log.Println("Got error building expression:")
 		log.Println(err.Error())
 		return []string{}, err
    }
-
+   var userIds []string
+   for _, record := range records {
+		userIds = append(userIds, record.UserId)
+   }
    return userIds, nil
 }
