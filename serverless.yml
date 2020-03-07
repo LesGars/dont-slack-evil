@@ -64,3 +64,6 @@ functions:
       - http:
           path: redirect-url
           method: get
+    environment:
+      CLIENT_ID: ${self:custom.secrets.CLIENT_ID}
+      CLIENT_SECRET: ${self:custom.secrets.CLIENT_SECRET}
