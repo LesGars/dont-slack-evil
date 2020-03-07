@@ -7,11 +7,10 @@ import (
 	"github.com/slack-go/slack"
 )
 
-func UserHome(userId string) slack.Message {
-	name := translateUserIdToUserName(userId)
+func UserHome(userId string, userName string) slack.Message {
 	message := slack.NewBlockMessage(
 		append(
-			HomeBasicSections(name, userId),
+			HomeBasicSections(userName, userId),
 			EnlightenmentSection()...,
 		)...,
 	)
@@ -25,11 +24,6 @@ func HomeBasicSections(userName string, userId string) []slack.Block {
 		introSections(userName),
 		statsSections(userId)...,
 	)
-}
-
-func translateUserIdToUserName(userId string) string {
-	// TODO in https://github.com/gjgd/dont-slack-evil/issues/16
-	return userId
 }
 
 func introSections(userName string) []slack.Block {
