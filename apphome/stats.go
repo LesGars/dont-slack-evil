@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamdbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/jinzhu/now"
 )
 
@@ -77,7 +77,7 @@ func userProj()	expression.ProjectionBuilder {
 }
 
 func usersWithBadQualityMessages() ([]string, error) {
-	filter := badQualityFilt()
+	filter := expression.And(sinceBeginningOfQuarterFilt(), badQualityFilt())
 	proj := userProj()
 	expr, buildErr := expression.NewBuilder().WithFilter(filter).WithProjection(proj).Build()
 	if buildErr != nil {
