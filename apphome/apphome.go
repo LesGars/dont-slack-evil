@@ -8,11 +8,13 @@ import (
 	"github.com/slack-go/slack"
 )
 
-func UserHome(userId string, api *slack.Client) slack.Message {
-	name := translateUserIdToUserName(userId, api)
+func UserHome(userId string, userName string) slack.Message {
+	log.Println("lol")
+	log.Println(userId)
+	log.Println(userName)
 	message := slack.NewBlockMessage(
 		append(
-			HomeBasicSections(name, userId),
+			HomeBasicSections(userName, userId),
 			EnlightenmentSection()...,
 		)...,
 	)
@@ -26,15 +28,6 @@ func HomeBasicSections(userName string, userId string) []slack.Block {
 		introSections(userName),
 		statsSections(userId)...,
 	)
-}
-
-func translateUserIdToUserName(userId string, api *slack.Client) string {
-	user, getUserInfoErr := api.GetUserInfo(userId)
-	if getUserInfoErr != nil {
-		log.Println(getUserInfoErr)
-		return ""
-	}
-	return user.RealName
 }
 
 func introSections(userName string) []slack.Block {
