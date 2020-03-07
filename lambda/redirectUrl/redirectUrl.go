@@ -9,8 +9,11 @@ import (
 	"io/ioutil"
 	"encoding/json"
 
+	dsedb "dont-slack-evil/db"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/fatih/structs"
 )
 
 // OauthAccessResponse is the type of the Oauth Access response
@@ -27,6 +30,12 @@ type OauthAccessResponse struct {
 	} `json:"team"`
 	Entreprise string `json:"entreprise"`
 }
+
+// OauthTokenDBItem is the struct for storing the access token in DB
+type OauthTokenDBItem struct {
+	TeamID string `json:"team_id"`
+	AccessToken string `json:"access_token"`
+}
 // Response is of type APIGatewayProxyResponse
 type Response events.APIGatewayProxyResponse
 
@@ -35,6 +44,8 @@ type Request events.APIGatewayProxyRequest
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request Request) (Response, error) {
+	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
+	// Get Oauth Access token
 	query := request.QueryStringParameters
 	code := query["code"]
 	clientID := os.Getenv("CLIENT_ID")
@@ -54,15 +65,30 @@ func Handler(request Request) (Response, error) {
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	log.Printf("%s", body)
 	var oauthAccessResponse OauthAccessResponse;
 	unMarshallErr := json.Unmarshal(body, &oauthAccessResponse)
 	if unMarshallErr != nil {
 		log.Println(unMarshallErr)
 	}
-	log.Println(oauthAccessResponse)
-	botAccessToken := oauthAccessResponse.AccessToken
-	log.Println(botAccessToken)
+
+	// Save in DB
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "oauth-tokens"
+	dbError := dsedb.CreateTableIfNotCreated(tableName, "team_id")
+	if dbError {
+		log.Println(dbError)
+	}
+	dbItem := OauthTokenDBItem{
+		TeamID: oauthAccessResponse.Team.ID,
+		AccessToken: oauthAccessResponse.AccessToken,
+	}
+	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
+	if !dbResult {
+		log.Println("Could not store message in DB")
+	} else {
+		log.Println("Oauth Access token was stored successfully")
+	}
+
+	// Redirect to slack workspace URL
 	redirectURL := "https://app.slack.com/client/" + oauthAccessResponse.Team.ID
 	response := Response{
 		StatusCode: 302,
