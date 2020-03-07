@@ -42,8 +42,8 @@ var publishView = slackBotUserApiClient.PublishView
 
 var userHome = apphome.UserHome
 
-// HandleEvent uses Slack's Event API to respond to an event emitted by our application
-func HandleEvent(body []byte) (string, error) {
+// HandleSlackEvent uses Slack's Event API to respond to an event emitted by our application
+func HandleSlackEvent(body []byte) (string, error) {
 	var challengeResponse string
 	eventsAPIEvent, e := parseEvent(
 		json.RawMessage(body),

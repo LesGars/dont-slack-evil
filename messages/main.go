@@ -29,7 +29,7 @@ func Handler(request Request) (Response, error) {
 		},
 		StatusCode: 200,
 	}
-	challengeResponse, err := HandleEvent(body)
+	challengeResponse, err := HandleSlackEvent(body)
 	if err != nil {
 		resp.StatusCode = 500
 	} else {
