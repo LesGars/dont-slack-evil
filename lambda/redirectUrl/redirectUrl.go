@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
-	"os"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
-	"io/ioutil"
-	"encoding/json"
 
 	dsedb "dont-slack-evil/db"
 
@@ -72,14 +72,14 @@ func Handler(request Request) (Response, error) {
 	}
 
 	// Save in DB
-	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "oauth-tokens"
-	dbError := dsedb.CreateTableIfNotCreated(tableName, "team_id")
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
+	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_team_id")
 	if dbError {
 		log.Println(dbError)
 	}
-	dbItem := OauthTokenDBItem{
-		TeamID: oauthAccessResponse.Team.ID,
-		AccessToken: oauthAccessResponse.AccessToken,
+	dbItem := dsedb.Team{
+		SlackTeamId: oauthAccessResponse.Team.ID,
+		SlackBotUserToken: oauthAccessResponse.AccessToken,
 	}
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
