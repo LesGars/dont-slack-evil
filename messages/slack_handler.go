@@ -34,7 +34,16 @@ func SlackHandler(body []byte) (string, error) {
 	}
 
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
-		handleSlackEvent(eventsAPIEvent)
+		// Retrieve team data (token, etc)
+		team, teamErr := dsedb.FindOrCreateTeamById(eventsAPIEvent.TeamID)
+		if teamErr != nil {
+			log.Printf("Could not retrieve team data: %s", teamErr)
+			return "", teamErr
+		}
+		slackBotUserApiClient := slack.New(team.SlackBotUserToken)
+		apiForTeam := ApiForTeam{Team: *team, SlackBotUserApiClient: slackBotUserApiClient}
+
+		handleSlackEvent(eventsAPIEvent, apiForTeam)
 	}
 	return challengeResponse, nil
 }
@@ -54,16 +63,8 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 	return buf.String(), err
 }
 
-func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent) (string, error) {
+func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent, apiForTeam ApiForTeam) (string, error) {
 	innerEvent := eventsAPIEvent.InnerEvent
-	// Retrieve team data (token, etc)
-	team, teamErr := dsedb.FindOrCreateTeamById(eventsAPIEvent.TeamID)
-	if teamErr != nil {
-		log.Printf("Could not retrieve team data: %s", teamErr)
-		return "", teamErr
-	}
-	slackBotUserApiClient := slack.New(team.SlackBotUserToken)
-	apiForTeam := ApiForTeam{Team: *team, SlackBotUserApiClient: slackBotUserApiClient}
 
 	// Process the event using team data
 	log.Printf("Processing an event of inner data %s", innerEvent.Data)
