@@ -60,44 +60,28 @@ func TestSlackHandler_URLVerificationSuccess(t *testing.T) {
 	}
 }
 
-func mockApiForTeam() ApiForTeam {
-	mockedSlackClient := slack.New("xoxb-42")
-
-	return ApiForTeam{
+func mockWorkingApiForTeam(slackevents.EventsAPIEvent) (*ApiForTeam, error) {
+	return &ApiForTeam{
 		Team:                  db.Team{SlackTeamId: "42", SlackBotUserToken: "xoxb-42"},
-		SlackBotUserApiClient: mockedSlackClient,
-	}
+		SlackBotUserApiClient: WorkingDummySlackClient{},
+	}, nil
 }
 
-/* Broken tests : see https://lesgarshack.slack.com/archives/CUHTQKV9N/p1583598765006100?thread_ts=1583597618.005900&cid=CUHTQKV9N
+type WorkingDummySlackClient struct{}
 
-// If parseEvent returns an event of type AppMentionEvent and the POST message fails, the handler should return an error
-func TestHandleSlackEvent_AppMentionEventFailure(t *testing.T) {
-	oldparseEvent := parseEvent
-	defer func() { parseEvent = oldparseEvent }()
-	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
-		return slackevents.EventsAPIEvent{
-			Type:       slackevents.AppMention,
-			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.AppMentionEvent{}},
-		}, nil
-	}
-
-	oldpostMessage := postMessage
-	defer func() { postMessage = oldpostMessage }()
-	postMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
-		return "", "", errors.New("Error-mock")
-	}
-	_, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
-	want := "Error while posting message Error-mock"
-	got := e.Error()
-	if got != want {
-		t.Errorf("The handler doesn't return the right error, got %v want %v", got, want)
-	}
-
+func (ds WorkingDummySlackClient) PostMessage(channelID string, options ...slack.MsgOption) (string, string, error) {
+	return "", "", nil
+}
+func (ds WorkingDummySlackClient) PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
+	return nil, errors.New("Error-Mock")
 }
 
 // If parseEvent returns an event of type AppMentionEvent and the POST message succeeds, the handler should return nil and nil
 func TestHandleSlackEvent_AppMentionEventSuccess(t *testing.T) {
+	oldBuildApiForTeam := buildApiForTeam
+	defer func() { buildApiForTeam = oldBuildApiForTeam }()
+	buildApiForTeam = mockWorkingApiForTeam
+
 	oldparseEvent := parseEvent
 	defer func() { parseEvent = oldparseEvent }()
 	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
@@ -107,11 +91,6 @@ func TestHandleSlackEvent_AppMentionEventSuccess(t *testing.T) {
 		}, nil
 	}
 
-	oldpostMessage := postMessage
-	defer func() { postMessage = oldpostMessage }()
-	postMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
-		return "", "", nil
-	}
 	resp, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 
 	if resp != "" {
@@ -121,6 +100,34 @@ func TestHandleSlackEvent_AppMentionEventSuccess(t *testing.T) {
 		t.Errorf("The handler should not failed. It returned the following error %v", e)
 	}
 
+}
+
+/* Broken tests : see https://lesgarshack.slack.com/archives/CUHTQKV9N/p1583598765006100?thread_ts=1583597618.005900&cid=CUHTQKV9N
+
+// If parseEvent returns an event of type AppMentionEvent and the POST message fails, the handler should return an error
+func TestHandleSlackEvent_AppMentionEventFailure(t *testing.T) {
+	oldBuildApiForTeam := buildApiForTeam
+	defer func() { buildApiForTeam = oldBuildApiForTeam }()
+	buildApiForTeam = mockApiForTeam
+
+	oldparseEvent := parseEvent
+	defer func() { parseEvent = oldparseEvent }()
+	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
+		return slackevents.EventsAPIEvent{
+			Type:       slackevents.AppMention,
+			InnerEvent: slackevents.EventsAPIInnerEvent{Data: &slackevents.AppMentionEvent{}},
+		}, nil
+	}
+
+	_, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
+	if e == nil {
+		t.Errorf("The handler doesn't return an error")
+	}
+	want := "Error while posting message Error-mock"
+	got := e.Error()
+	if got != want {
+		t.Errorf("The handler doesn't return the right error, got %v want %v", got, want)
+	}
 }
 
 If parseEvent returns an event of type AppHomeOpened and the POST message fails, the handler should return an error

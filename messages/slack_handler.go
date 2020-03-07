@@ -2,6 +2,7 @@ package messages
 
 import (
 	"bytes"
+	"dont-slack-evil/db"
 	dsedb "dont-slack-evil/db"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,17 @@ import (
 )
 
 var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
+
+type ApiForTeam struct {
+	Team                  db.Team
+	SlackBotUserApiClient SlackApiInterface
+}
+
+type SlackApiInterface interface {
+	// This interface is meant to make a *slack.Client mockable easily
+	PostMessage(channelID string, options ...slack.MsgOption) (string, string, error)
+	PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error)
+}
 
 // SlackHandler uses Slack's Event API to respond to an event emitted by our application
 func SlackHandler(body []byte) (string, error) {
@@ -35,15 +47,12 @@ func SlackHandler(body []byte) (string, error) {
 
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
 		// Retrieve team data (token, etc)
-		team, teamErr := dsedb.FindOrCreateTeamById(eventsAPIEvent.TeamID)
-		if teamErr != nil {
-			log.Printf("Could not retrieve team data: %s", teamErr)
-			return "", teamErr
+		apiForTeam, apiForTeamErr := buildApiForTeam(eventsAPIEvent)
+		if apiForTeamErr != nil {
+			log.Printf("Could not retrieve team data: %s", apiForTeamErr)
+			return "", apiForTeamErr
 		}
-		slackBotUserApiClient := slack.New(team.SlackBotUserToken)
-		apiForTeam := ApiForTeam{Team: *team, SlackBotUserApiClient: slackBotUserApiClient}
-
-		handleSlackEvent(eventsAPIEvent, apiForTeam)
+		handleSlackEvent(eventsAPIEvent, *apiForTeam)
 	}
 	return challengeResponse, nil
 }
@@ -77,4 +86,15 @@ func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent, apiForTeam ApiF
 		return updateAppHome(ev, apiForTeam)
 	}
 	return "", nil
+}
+
+var buildApiForTeam = func(eventsAPIEvent slackevents.EventsAPIEvent) (*ApiForTeam, error) {
+	// Retrieve team data (token, etc)
+	team, teamErr := dsedb.FindOrCreateTeamById(eventsAPIEvent.TeamID)
+	if teamErr != nil {
+		log.Printf("Could not retrieve team data: %s", teamErr)
+		return nil, teamErr
+	}
+	slackBotUserApiClient := slack.New(team.SlackBotUserToken)
+	return &ApiForTeam{Team: *team, SlackBotUserApiClient: slackBotUserApiClient}, nil
 }

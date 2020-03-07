@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"dont-slack-evil/apphome"
-	"dont-slack-evil/db"
 	dsedb "dont-slack-evil/db"
 	"dont-slack-evil/nlp"
 
@@ -39,11 +38,6 @@ var postMessage = slackBotUserApiClient.PostMessage
 var publishView = slackBotUserApiClient.PublishView
 
 var userHome = apphome.UserHome
-
-type ApiForTeam struct {
-	Team                  db.Team
-	SlackBotUserApiClient *slack.Client
-}
 
 func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
 	log.Printf("Reacting to message event from channel %s", message.Channel)
