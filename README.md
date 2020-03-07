@@ -68,7 +68,7 @@ You can make use of the following extra properties:
 Under Debug > open configurations, add the following ENV variables
 ```
 "env": {
-  "DYNAMODB_TABLE": "dont-slack-evil-test-messages",
+  "DYNAMODB_TABLE_PREFIX": "dont-slack-evil-test-",
   "AWS_REGION": "us-east-1"
 },
 ```
@@ -76,7 +76,7 @@ Under Code > Preferences > Settings, search for "testEnvVars" and add your vars 
 ```
 "settings": {
   "go.testEnvVars": {
-    "DYNAMODB_TABLE": "dont-slack-evil-test-messages",
+    "DYNAMODB_TABLE_PREFIX": "dont-slack-evil-test-",
     "AWS_REGION": "us-east-1"
   },
 }

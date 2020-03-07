@@ -7,7 +7,7 @@ provider:
   profile: dont-slack-evil-hackaton
 
   environment:
-    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-messages
+    DYNAMODB_TABLE_PREFIX: ${self:service}-${opt:stage, self:provider.stage}-
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -18,7 +18,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_PREFIX}*"
 
 package:
   exclude:

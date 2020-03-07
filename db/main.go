@@ -26,18 +26,18 @@ func DynamoDBClient() *dynamodb.DynamoDB {
 	return dynamodb.New(sess)
 }
 
-// CreateDBIfNotCreated creates DynamoDB table if it doesn't exist
-func CreateDBIfNotCreated(tableName string) bool {
+// CreateTableIfNotCreated creates DynamoDB table if it doesn't exist
+func CreateTableIfNotCreated(tableName string, mainKey string) bool {
 	createTableInput := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
-				AttributeName: aws.String("slack_message_id"),
+				AttributeName: aws.String(mainKey),
 				AttributeType: aws.String("S"),
 			},
 		},
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
-				AttributeName: aws.String("slack_message_id"),
+				AttributeName: aws.String(mainKey),
 				KeyType:       aws.String("HASH"),
 			},
 		},
@@ -111,14 +111,10 @@ func Update(tableName string, slackMessageId string, sentiment Sentiment) bool {
 }
 
 // Get an item in the database
-func Get(tableName string, id string) (*dynamodb.GetItemOutput, error) {
+func Get(tableName string, key map[string]*dynamodb.AttributeValue) (*dynamodb.GetItemOutput, error) {
 	return DynamoDBClient().GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"slack_message_id": {
-				S: aws.String(id),
-			},
-		},
+		Key:       key,
 	})
 }
 
