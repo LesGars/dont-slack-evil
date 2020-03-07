@@ -91,9 +91,10 @@ func HandleEvent(body []byte) (string, error) {
 			}
 		case *slackevents.AppHomeOpenedEvent:
 			log.Println("Reacting to app home request event")
+			homeOpened := eventsAPIEvent.InnerEvent.Data.(*slackevents.AppHomeOpenedEvent)
 			homeViewForUser := slack.HomeTabViewRequest{
 				Type:   "home",
-				Blocks: userHome("Cyril").Blocks,
+				Blocks: userHome(homeOpened.User, slackBotUserApiClient).Blocks,
 			}
 			homeViewAsJson, _ := json.Marshal(homeViewForUser)
 			log.Printf("Sending view %s", homeViewAsJson)

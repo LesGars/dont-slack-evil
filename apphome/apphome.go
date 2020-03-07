@@ -2,13 +2,14 @@ package apphome
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/slack-go/slack"
 )
 
-func UserHome(userId string) slack.Message {
-	name := translateUserIdToUserName(userId)
+func UserHome(userId string, api *slack.Client) slack.Message {
+	name := translateUserIdToUserName(userId, api)
 	message := slack.NewBlockMessage(
 		append(
 			HomeBasicSections(name, userId),
@@ -27,9 +28,13 @@ func HomeBasicSections(userName string, userId string) []slack.Block {
 	)
 }
 
-func translateUserIdToUserName(userId string) string {
-	// TODO in https://github.com/gjgd/dont-slack-evil/issues/16
-	return userId
+func translateUserIdToUserName(userId string, api *slack.Client) string {
+	user, getUserInfoErr := api.GetUserInfo(userId)
+	if getUserInfoErr != nil {
+		log.Println(getUserInfoErr)
+		return ""
+	}
+	return user.RealName
 }
 
 func introSections(userName string) []slack.Block {
