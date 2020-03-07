@@ -129,6 +129,13 @@ func TestHandleEvent_AppHomeOpenedFailure(t *testing.T) {
 		return slack.Message{}
 	}
 
+	oldGetUserInfo := getUserInfo
+	defer func() { getUserInfo = oldGetUserInfo }()
+	getUserInfoError := errors.New("Error-Mock")
+	getUserInfo = func(userId string) (*slack.User, error) {
+		return &slack.User{}, getUserInfoError
+	}
+
 	oldpublishView := publishView
 	defer func() { publishView = oldpublishView }()
 	publishViewError := errors.New("Error-Mock")

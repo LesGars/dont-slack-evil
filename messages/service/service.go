@@ -40,6 +40,8 @@ var postMessage = slackBotUserApiClient.PostMessage
 // in order to make it mockable
 var publishView = slackBotUserApiClient.PublishView
 
+var getUserInfo = slackBotUserApiClient.GetUserInfo
+
 var userHome = apphome.UserHome
 
 // HandleEvent uses Slack's Event API to respond to an event emitted by our application
@@ -93,7 +95,7 @@ func HandleEvent(body []byte) (string, error) {
 			log.Println("Reacting to app home request event")
 			homeOpened := eventsAPIEvent.InnerEvent.Data.(*slackevents.AppHomeOpenedEvent)
 			userID := homeOpened.User
-			user, getUserInfoErr := slackBotUserApiClient.GetUserInfo(userID)
+			user, getUserInfoErr := getUserInfo(userID)
 			if getUserInfoErr != nil {
 				log.Println(getUserInfoErr)
 			}
