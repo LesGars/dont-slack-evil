@@ -2,16 +2,12 @@ package apphome
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/slack-go/slack"
 )
 
 func UserHome(userId string, userName string) slack.Message {
-	log.Println("lol")
-	log.Println(userId)
-	log.Println(userName)
 	message := slack.NewBlockMessage(
 		append(
 			HomeBasicSections(userName, userId),
