@@ -1,7 +1,6 @@
 package messages
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +8,7 @@ import (
 	"os"
 
 	"dont-slack-evil/apphome"
+	"dont-slack-evil/db"
 	dsedb "dont-slack-evil/db"
 	"dont-slack-evil/nlp"
 
@@ -17,8 +17,6 @@ import (
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
-
-var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
 
 // If you need to send a message from the app's "bot user", use this bot client
 var slackBotUserOauthToken = os.Getenv("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
@@ -42,58 +40,9 @@ var publishView = slackBotUserApiClient.PublishView
 
 var userHome = apphome.UserHome
 
-// HandleSlackEvent uses Slack's Event API to respond to an event emitted by our application
-func HandleSlackEvent(body []byte) (string, error) {
-	var challengeResponse string
-	eventsAPIEvent, e := parseEvent(
-		json.RawMessage(body),
-		slackevents.OptionVerifyToken(&slackevents.TokenComparator{VerificationToken: slackVerificationToken}),
-	)
-
-	if e != nil {
-		const message = "Could not parse Slack event :'("
-		log.Println(message)
-		return "", errors.New(message)
-	}
-	log.Printf("Processing an event of outer type %s", eventsAPIEvent.Type)
-
-	if eventsAPIEvent.Type == slackevents.URLVerification {
-		return handleSlackChallenge(eventsAPIEvent, body)
-	}
-
-	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
-		handleSlackEvent(eventsAPIEvent)
-	}
-	return challengeResponse, nil
-}
-
-func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent) (string, error) {
-	innerEvent := eventsAPIEvent.InnerEvent
-	log.Printf("Processing an event of inner data %s", innerEvent.Data)
-	switch ev := innerEvent.Data.(type) {
-	case *slackevents.MessageEvent:
-		return analyzeMessage(ev)
-	case *slackevents.AppMentionEvent:
-		return yesHello(ev)
-	case *slackevents.AppHomeOpenedEvent:
-		return updateAppHome(ev)
-	}
-	return "", nil
-}
-
-// Slack Challenge is used to register the URL in the slack API config interface
-// Should only be used once by slack when changing the events URL
-func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte) (string, error) {
-	var err error
-	buf := new(bytes.Buffer)
-	var r *slackevents.ChallengeResponse
-	e := json.Unmarshal(body, &r)
-	if e != nil {
-		err = errors.New("Unable to register the URL")
-		return "", err
-	}
-	buf.Write([]byte(r.Challenge))
-	return buf.String(), err
+type ApiForTeam struct {
+	Team                  db.Team
+	SlackBotUserApiClient *slack.Client
 }
 
 func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
@@ -111,9 +60,9 @@ func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
 	return "", nil
 }
 
-func yesHello(message *slackevents.AppMentionEvent) (string, error) {
+func yesHello(message *slackevents.AppMentionEvent, apiForTeam ApiForTeam) (string, error) {
 	log.Printf("Reacting to app mention event from channel %s", message.Channel)
-	_, _, postError := postMessage(message.Channel, slack.MsgOptionText("Yes, hello.", false))
+	_, _, postError := apiForTeam.SlackBotUserApiClient.PostMessage(message.Channel, slack.MsgOptionText("Yes, hello.", false))
 	if postError != nil {
 		message := fmt.Sprintf("Error while posting message %s", postError)
 		log.Printf(message)
@@ -122,10 +71,27 @@ func yesHello(message *slackevents.AppMentionEvent) (string, error) {
 	return "", nil
 }
 
+func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (string, error) {
+	log.Println("Reacting to app home request event")
+	homeViewForUser := slack.HomeTabViewRequest{
+		Type:   "home",
+		Blocks: userHome("Cyril").Blocks,
+	}
+	homeViewAsJson, _ := json.Marshal(homeViewForUser)
+	log.Printf("Sending view %s", homeViewAsJson)
+	_, publishViewError := apiForTeam.SlackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
+	if publishViewError != nil {
+		log.Println(publishViewError)
+		return "", publishViewError
+	}
+
+	return "", nil
+}
+
 var storeMessage = func(message *slackevents.MessageEvent) error {
 	// Create DB
-	tableName := os.Getenv("DYNAMODB_TABLE")
-	dbError := dsedb.CreateDBIfNotCreated(tableName)
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "-teams"
+	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_message_id")
 	if dbError {
 		return errors.New("Database could not be created")
 	}
@@ -161,7 +127,7 @@ var storeMessage = func(message *slackevents.MessageEvent) error {
 }
 
 var getSentiment = func(message *slackevents.MessageEvent) error {
-	tableName := os.Getenv("DYNAMODB_TABLE")
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "-teams"
 	apiKey := os.Getenv("PD_API_KEY")
 	apiURL := os.Getenv("PD_API_URL")
 	text := message.Text
@@ -178,21 +144,4 @@ var getSentiment = func(message *slackevents.MessageEvent) error {
 		log.Println("Message was updated successfully with sentiment")
 	}
 	return nil
-}
-
-func updateAppHome(ev *slackevents.AppHomeOpenedEvent) (string, error) {
-	log.Println("Reacting to app home request event")
-	homeViewForUser := slack.HomeTabViewRequest{
-		Type:   "home",
-		Blocks: userHome("Cyril").Blocks,
-	}
-	homeViewAsJson, _ := json.Marshal(homeViewForUser)
-	log.Printf("Sending view %s", homeViewAsJson)
-	_, publishViewError := publishView(ev.User, homeViewForUser, ev.View.Hash)
-	if publishViewError != nil {
-		log.Println(publishViewError)
-		return "", publishViewError
-	}
-
-	return "", nil
 }

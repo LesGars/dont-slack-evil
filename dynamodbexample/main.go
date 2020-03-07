@@ -1,15 +1,14 @@
-package main
+package dynamodbexample
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"math/rand"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -32,7 +31,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	svc := dynamodb.New(sess)
 
 	// Create DynamoDB table if it doesn't exist
-	tableName := os.Getenv("DYNAMODB_TABLE")
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "-teams"
 	createTableInput := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
@@ -46,12 +45,12 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 				KeyType:       aws.String("HASH"),
 			},
 		},
-		TableName: aws.String(tableName),
+		TableName:   aws.String(tableName),
 		BillingMode: aws.String("PAY_PER_REQUEST"),
 	}
 	_, err := svc.CreateTable(createTableInput)
 	if err != nil {
-		if (!strings.Contains(err.Error(), "Table already exists")) {
+		if !strings.Contains(err.Error(), "Table already exists") {
 			fmt.Println("Got error calling CreateTable:")
 			fmt.Println(err.Error())
 			os.Exit(1)
@@ -87,9 +86,9 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	result, err := svc.GetItem(&dynamodb.GetItemInput{
 		TableName: aws.String(tableName),
 		Key: map[string]*dynamodb.AttributeValue{
-				"id": {
-						S: aws.String(randomString),
-				},
+			"id": {
+				S: aws.String(randomString),
+			},
 		},
 	})
 	if err != nil {
@@ -98,15 +97,11 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}
 
 	// Returning response with AWS Lambda Proxy Response
-	return events.APIGatewayProxyResponse {
-		Body: fmt.Sprintf("%s", result),
+	return events.APIGatewayProxyResponse{
+		Body:       fmt.Sprintf("%s", result),
 		StatusCode: 200,
 		Headers: map[string]string{
 			"content-type": "text/plain",
 		},
 	}, nil
-}
-
-func main() {
-	lambda.Start(Handler)
 }

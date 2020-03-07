@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/fatih/structs"
 )
 
@@ -18,7 +17,7 @@ type Response events.APIGatewayProxyResponse
 type Request events.APIGatewayProxyRequest
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
-func Handler(request Request) (Response, error) {
+func LambdaHandler(request Request) (Response, error) {
 	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
 	body := []byte(request.Body)
 	log.Printf("Receiving request body %s", body)
@@ -29,7 +28,7 @@ func Handler(request Request) (Response, error) {
 		},
 		StatusCode: 200,
 	}
-	challengeResponse, err := HandleSlackEvent(body)
+	challengeResponse, err := SlackHandler(body)
 	if err != nil {
 		resp.StatusCode = 500
 	} else {
@@ -39,8 +38,4 @@ func Handler(request Request) (Response, error) {
 	}
 
 	return resp, nil
-}
-
-func main() {
-	lambda.Start(Handler)
 }

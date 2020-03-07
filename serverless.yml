@@ -8,6 +8,7 @@ provider:
 
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-messages
+    DYNAMODB_TABLE_PREFIX: ${self:service}-${opt:stage, self:provider.stage}
   iamRoleStatements:
     - Effect: Allow
       Action:

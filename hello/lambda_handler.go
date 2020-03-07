@@ -1,15 +1,13 @@
-package main
+package hello
 
 import (
-	"encoding/json"
 	"context"
+	"encoding/json"
 	"os"
 
 	"dont-slack-evil/nlp"
-	
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 )
 
 // Response is of type APIGatewayProxyResponse since we're leveraging the
@@ -26,11 +24,11 @@ func Handler(ctx context.Context) (Response, error) {
 
 	sentimentAnalysis, sentimentError := nlp.GetSentiment(message, apiURL, apiKey)
 	if sentimentError != nil {
-	  return Response{StatusCode: 500}, sentimentError
+		return Response{StatusCode: 500}, sentimentError
 	}
 	jsonBody, err := json.Marshal(sentimentAnalysis)
 	if err != nil {
-	  return Response{StatusCode: 404}, err
+		return Response{StatusCode: 404}, err
 	}
 
 	return Response{
@@ -38,11 +36,7 @@ func Handler(ctx context.Context) (Response, error) {
 		IsBase64Encoded: false,
 		Body:            string(jsonBody),
 		Headers: map[string]string{
-			"Content-Type":           "application/json",
+			"Content-Type": "application/json",
 		},
 	}, nil
-}
-
-func main() {
-	lambda.Start(Handler)
 }

@@ -16,7 +16,7 @@ func TestHandleSlackEvent_parseEventFailure(t *testing.T) {
 	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{}, errors.New("Error-Mock")
 	}
-	_, e := HandleSlackEvent([]byte("abcd"))
+	_, e := SlackHandler([]byte("abcd"))
 	want := "Could not parse Slack event :'("
 	got := e.Error()
 	if got != want {
@@ -32,7 +32,7 @@ func TestHandleSlackEvent_URLVerificationFailure(t *testing.T) {
 	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{Type: slackevents.URLVerification}, nil
 	}
-	_, e := HandleSlackEvent([]byte("{{}"))
+	_, e := SlackHandler([]byte("{{}"))
 	want := "Unable to register the URL"
 	got := e.Error()
 	if got != want {
@@ -48,7 +48,7 @@ func TestHandleSlackEvent_URLVerificationSuccess(t *testing.T) {
 	parseEvent = func(rawEvent json.RawMessage, opts ...slackevents.Option) (slackevents.EventsAPIEvent, error) {
 		return slackevents.EventsAPIEvent{Type: slackevents.URLVerification}, nil
 	}
-	got, e := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	got, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 	want := "Challenge"
 
 	if e != nil {
@@ -76,7 +76,7 @@ func TestHandleSlackEvent_AppMentionEventFailure(t *testing.T) {
 	postMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
 		return "", "", errors.New("Error-mock")
 	}
-	_, e := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	_, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 	want := "Error while posting message Error-mock"
 	got := e.Error()
 	if got != want {
@@ -101,7 +101,7 @@ func TestHandleSlackEvent_AppMentionEventSuccess(t *testing.T) {
 	postMessage = func(channelID string, options ...slack.MsgOption) (string, string, error) {
 		return "", "", nil
 	}
-	resp, e := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	resp, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 
 	if resp != "" {
 		t.Errorf("The handler should have returned no response. Instead it returned %v", resp)
@@ -135,7 +135,7 @@ func TestHandleSlackEvent_AppHomeOpenedFailure(t *testing.T) {
 	publishView = func(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
 		return nil, publishViewError
 	}
-	_, got := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	_, got := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 	want := publishViewError
 	if got != want {
 		t.Errorf("The handler doesn't return the right error, got %v want %v", got, want)
@@ -166,7 +166,7 @@ func TestHandleSlackEvent_AppHomeOpenedSuccess(t *testing.T) {
 		return slack.Message{}
 	}
 
-	resp, e := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	resp, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 
 	if resp != "" {
 		t.Errorf("The handler should have returned no response. Instead it returned %v", resp)
@@ -194,7 +194,7 @@ func TestHandleSlackEvent_MessageEventStoreMessageFailure(t *testing.T) {
 	storeMessage = func(message *slackevents.MessageEvent) error {
 		return storeMessageError
 	}
-	_, got := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	_, got := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 	want := storeMessageError
 	if got != want {
 		t.Errorf("The handler doesn't return the right error, got %v want %v", got, want)
@@ -224,7 +224,7 @@ func TestHandleSlackEvent_MessageEventGetSentimentFailure(t *testing.T) {
 	getSentiment = func(message *slackevents.MessageEvent) error {
 		return getSentimentError
 	}
-	_, got := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	_, got := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 	want := getSentimentError
 	if got != want {
 		t.Errorf("The handler doesn't return the right error, got %v want %v", got, want)
@@ -253,7 +253,7 @@ func TestHandleSlackEvent_MessageEventSuccess(t *testing.T) {
 	getSentiment = func(message *slackevents.MessageEvent) error {
 		return nil
 	}
-	resp, e := HandleSlackEvent([]byte("{\"Challenge\": \"Challenge\"}"))
+	resp, e := SlackHandler([]byte("{\"Challenge\": \"Challenge\"}"))
 
 	if resp != "" {
 		t.Errorf("The handler should have returned no response. Instead it returned %v", resp)
