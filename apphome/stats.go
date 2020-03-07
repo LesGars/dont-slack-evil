@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamdbattribute"
 	"github.com/jinzhu/now"
 )
 
@@ -69,4 +70,40 @@ func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 		return 0
 	}
 	return val
+}
+
+func userProj()	expression.ProjectionBuilder {
+	return expression.NamesList(expression.Name("UserId"))
+}
+
+func usersWithBadQualityMessages() ([]string, error) {
+	filter := badQualityFilt()
+	proj := userProj()
+	expr, buildErr := expression.NewBuilder().WithFilter(filter).WithProjection(proj).Build()
+	if buildErr != nil {
+		log.Println("Got error building expression:")
+		log.Println(buildErr.Error())
+		return []string{}, buildErr
+	}
+
+	input := dynamodb.ScanInput{
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+		TableName:                 aws.String(os.Getenv("DYNAMODB_TABLE")),
+	}
+
+	var userIds []string
+
+	result, _ := dsedb.Scan(&input)
+
+	err := dynamodbattribute.UnmarshalListOfMaps(result.Items, &userIds)
+
+	if err != nil {
+		log.Println("Got error building expression:")
+		log.Println(err.Error())
+		return []string{}, err
+   }
+
+   return userIds, nil
 }
