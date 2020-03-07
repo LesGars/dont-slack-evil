@@ -1,8 +1,10 @@
 package db
 
 import (
+	"errors"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -17,23 +19,30 @@ type Team struct {
 }
 
 func FindOrCreateTeamById(id string) (*Team, error) {
-	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
 	// CreateTableIfNotCreated(tableName, "slack_team_id")
-
-	team, err := FindTeamById(id)
-	if err != nil {
-		if err != nil {
-			// TODO: intercept errorNotFound to create a team with empty bot token, and ask to complete OAuth flow
-			if !Store(tableName, structs.New(Team{SlackTeamId: id}).Map()) {
-				log.Printf("Error creating a team of ID %s", id)
-			}
+	team, findErr := FindTeamById(id)
+	if findErr != nil {
+		// TODO: check the error string, I wasn't able to make sure of this one
+		if !strings.Contains(findErr.Error(), "Item does not exist") {
+			return createTeamById(id)
 		} else {
-			log.Printf("%s", err) // WIll print a not found OR other useful like access not granted
+			log.Printf("%s", findErr)
+			return nil, findErr
 		}
-		return nil, err
 	}
 	log.Printf("Found team of ID %s called %s", team.SlackTeamId, "TODO")
 	return team, nil
+}
+
+func createTeamById(id string) (*Team, error) {
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
+	team := &Team{SlackTeamId: id}
+	if Store(tableName, structs.New(team).Map()) {
+		return team, nil
+	} else {
+		log.Printf("Error creating a team of ID %s", id)
+		return nil, errors.New("Could not create the team in DynamoDB")
+	}
 }
 
 func FindTeamById(id string) (*Team, error) {
