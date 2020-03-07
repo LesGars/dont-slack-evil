@@ -50,7 +50,6 @@ func CreateTableIfNotCreated(tableName string, mainKey string) bool {
 			log.Println(createTableErr.Error())
 			return false
 		}
-		log.Println(createTableErr.Error())
 	} else {
 		log.Println("Created the table", tableName)
 	}
