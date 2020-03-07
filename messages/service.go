@@ -69,7 +69,7 @@ func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (s
 	log.Println("Reacting to app home request event")
 	homeViewForUser := slack.HomeTabViewRequest{
 		Type:   "home",
-		Blocks: userHome("Cyril").Blocks,
+		Blocks: userHome(ev.User).Blocks,
 	}
 	homeViewAsJson, _ := json.Marshal(homeViewForUser)
 	log.Printf("Sending view %s", homeViewAsJson)
