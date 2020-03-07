@@ -84,7 +84,7 @@ func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (s
 
 var storeMessage = func(message *slackevents.MessageEvent) error {
 	// Create DB
-	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_message_id")
 	if dbError {
 		return errors.New("Database could not be created")
