@@ -1,13 +1,11 @@
-package main
+package messages
 
 import (
 	"log"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"dont-slack-evil/messages/service"
 	"github.com/fatih/structs"
-
 )
 
 // Response is of type APIGatewayProxyResponse since we're leveraging the
@@ -31,7 +29,7 @@ func Handler(request Request) (Response, error) {
 		},
 		StatusCode: 200,
 	}
-	challengeResponse, err := service.HandleEvent(body)
+	challengeResponse, err := HandleEvent(body)
 	if err != nil {
 		resp.StatusCode = 500
 	} else {
@@ -39,10 +37,9 @@ func Handler(request Request) (Response, error) {
 		resp.Body = challengeResponse
 		resp.Headers["Content-Type"] = "text"
 	}
-	
+
 	return resp, nil
 }
-
 
 func main() {
 	lambda.Start(Handler)

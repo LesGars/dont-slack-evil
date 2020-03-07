@@ -1,4 +1,4 @@
-package service
+package messages
 
 import (
 	"bytes"
@@ -58,53 +58,27 @@ func HandleEvent(body []byte) (string, error) {
 	log.Printf("Processing an event of outer type %s", eventsAPIEvent.Type)
 
 	if eventsAPIEvent.Type == slackevents.URLVerification {
-		var challengeError error
-		challengeResponse, challengeError = handleSlackChallenge(eventsAPIEvent, body)
-		if challengeError != nil {
-			return "", challengeError
-		}
+		return handleSlackChallenge(eventsAPIEvent, body)
 	}
 
 	if eventsAPIEvent.Type == slackevents.CallbackEvent || eventsAPIEvent.Type == slackevents.AppMention {
-		innerEvent := eventsAPIEvent.InnerEvent
-		log.Printf("Processing an event of inner data %s", innerEvent.Data)
-		switch ev := innerEvent.Data.(type) {
-		case *slackevents.MessageEvent:
-			log.Printf("Reacting to message event from channel %s", ev.Channel)
-			message := eventsAPIEvent.InnerEvent.Data.(*slackevents.MessageEvent)
-			storeMsgError := storeMessage(message)
-			if storeMsgError != nil {
-				return "", storeMsgError
-			}
-
-			getSentimentError := getSentiment(message)
-			if getSentimentError != nil {
-				return "", getSentimentError
-			}
-		case *slackevents.AppMentionEvent:
-			log.Printf("Reacting to app mention event from channel %s", ev.Channel)
-			_, _, postError := postMessage(ev.Channel, slack.MsgOptionText("Yes, hello.", false))
-			if postError != nil {
-				message := fmt.Sprintf("Error while posting message %s", postError)
-				log.Printf(message)
-				return "", errors.New(message)
-			}
-		case *slackevents.AppHomeOpenedEvent:
-			log.Println("Reacting to app home request event")
-			homeViewForUser := slack.HomeTabViewRequest{
-				Type:   "home",
-				Blocks: userHome("Cyril").Blocks,
-			}
-			homeViewAsJson, _ := json.Marshal(homeViewForUser)
-			log.Printf("Sending view %s", homeViewAsJson)
-			_, publishViewError := publishView(ev.User, homeViewForUser, ev.View.Hash)
-			if publishViewError != nil {
-				log.Println(publishViewError)
-				return "", publishViewError
-			}
-		}
+		handleSlackEvent(eventsAPIEvent)
 	}
 	return challengeResponse, nil
+}
+
+func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent) (string, error) {
+	innerEvent := eventsAPIEvent.InnerEvent
+	log.Printf("Processing an event of inner data %s", innerEvent.Data)
+	switch ev := innerEvent.Data.(type) {
+	case *slackevents.MessageEvent:
+		return analyzeMessage(ev)
+	case *slackevents.AppMentionEvent:
+		return yesHello(ev)
+	case *slackevents.AppHomeOpenedEvent:
+		return updateAppHome(ev)
+	}
+	return "", nil
 }
 
 // Slack Challenge is used to register the URL in the slack API config interface
@@ -120,6 +94,32 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 	}
 	buf.Write([]byte(r.Challenge))
 	return buf.String(), err
+}
+
+func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
+	log.Printf("Reacting to message event from channel %s", message.Channel)
+	storeMsgError := storeMessage(message)
+	if storeMsgError != nil {
+		return "", storeMsgError
+	}
+
+	getSentimentError := getSentiment(message)
+	if getSentimentError != nil {
+		return "", getSentimentError
+	}
+
+	return "", nil
+}
+
+func yesHello(message *slackevents.AppMentionEvent) (string, error) {
+	log.Printf("Reacting to app mention event from channel %s", message.Channel)
+	_, _, postError := postMessage(message.Channel, slack.MsgOptionText("Yes, hello.", false))
+	if postError != nil {
+		message := fmt.Sprintf("Error while posting message %s", postError)
+		log.Printf(message)
+		return "", errors.New(message)
+	}
+	return "", nil
 }
 
 var storeMessage = func(message *slackevents.MessageEvent) error {
@@ -178,4 +178,21 @@ var getSentiment = func(message *slackevents.MessageEvent) error {
 		log.Println("Message was updated successfully with sentiment")
 	}
 	return nil
+}
+
+func updateAppHome(ev *slackevents.AppHomeOpenedEvent) (string, error) {
+	log.Println("Reacting to app home request event")
+	homeViewForUser := slack.HomeTabViewRequest{
+		Type:   "home",
+		Blocks: userHome("Cyril").Blocks,
+	}
+	homeViewAsJson, _ := json.Marshal(homeViewForUser)
+	log.Printf("Sending view %s", homeViewAsJson)
+	_, publishViewError := publishView(ev.User, homeViewForUser, ev.View.Hash)
+	if publishViewError != nil {
+		log.Println(publishViewError)
+		return "", publishViewError
+	}
+
+	return "", nil
 }
