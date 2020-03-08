@@ -46,6 +46,7 @@ func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
 		if !strings.Contains(storeMsgError.Error(), "Database could not be created") {
 			return "", storeMsgError
 		}
+		log.Printf("Could not save initial message %s", storeMsgError)
 	}
 
 	getSentimentError := getSentiment(message)
@@ -94,8 +95,8 @@ var storeMessage = func(message *slackevents.MessageEvent) error {
 	// Create DB
 	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_message_id")
-	if dbError {
-		return errors.New("Database could not be created")
+	if dbError != nil {
+		return dbError
 	}
 
 	// Save in DB
