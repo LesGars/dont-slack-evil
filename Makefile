@@ -5,7 +5,7 @@ build:
 	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/dynamodbexample lambda/dynamodbexample/dynamodbexample.go
 	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/messages lambda/messages/messages.go
 	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/redirectUrl lambda/redirectUrl/redirectUrl.go
-	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/notifications notifications/main.go
+	env GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o bin/notifications lambda/notifications/notifications.go
 
 clean:
 	rm -rf ./bin
