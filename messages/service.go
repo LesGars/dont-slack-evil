@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
@@ -102,10 +103,11 @@ var storeMessage = func(message *slackevents.MessageEvent) error {
 	if e != nil {
 		return errors.New("Message could not be parsed before saving")
 	}
+	timeUnix, _ := message.EventTimeStamp.Int64()
 	dbItem := dsedb.Message{
 		UserId:         message.User,
 		Text:           message.Text,
-		CreatedAt:      message.EventTimeStamp.String(),
+		CreatedAt:      time.Unix(timeUnix, 0).Format(time.RFC3339),
 		SlackMessageId: message.EventTimeStamp.String(),
 		SlackThreadId:  message.ThreadTimeStamp,
 	}
