@@ -80,7 +80,6 @@ func Handler(request Request) (Response, error) {
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_team_id")
 	if dbError {
 		log.Println(dbError)
-		statusCode = 500
 	}
 	dbItem := dsedb.Team{
 		SlackTeamId: oauthAccessResponse.Team.ID,
