@@ -28,7 +28,7 @@ type OauthAccessResponse struct {
 		ID string `json:"id"`
 		Name string `json:"name"`
 	} `json:"team"`
-	Entreprise string `json:"entreprise"`
+	Enterprise string `json:"enterprise"`
 }
 
 // OauthTokenDBItem is the struct for storing the access token in DB
