@@ -73,10 +73,6 @@ func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 	return val
 }
 
-func userProj()	expression.ProjectionBuilder {
-	return expression.NamesList(expression.Name("user_id"))
-}
-
 // HasTooManyBadQualityMessagesLastQuarter returns true if the user sent too many messages of bad quality
 // over the last quarter...
 // TODO replace the stat by PercentageOfMessagesOfBadQualityLastQuarter
