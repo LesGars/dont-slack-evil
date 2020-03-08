@@ -61,7 +61,7 @@ func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
-		TableName:                 aws.String(os.Getenv("DYNAMODB_TABLE")),
+		TableName:                 aws.String(os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"),
 	}
 
 	val, err := dsedb.ScanToInt(dsedb.Scan(input))

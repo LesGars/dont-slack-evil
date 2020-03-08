@@ -7,7 +7,7 @@ provider:
   profile: dont-slack-evil-hackaton
 
   environment:
-    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}-messages
+    DYNAMODB_TABLE_PREFIX: ${self:service}-${opt:stage, self:provider.stage}-
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -18,7 +18,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE_PREFIX}*"
 
 package:
   exclude:
@@ -49,7 +49,6 @@ functions:
     environment:
       PD_API_URL: ${self:custom.secrets.PD_API_URL}
       PD_API_KEY: ${self:custom.secrets.PD_API_KEY}
-      SLACK_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_OAUTH_ACCESS_TOKEN}
       SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN}
       SLACK_VERIFICATION_TOKEN: ${self:custom.secrets.SLACK_VERIFICATION_TOKEN}
   notifications:
@@ -66,3 +65,12 @@ functions:
       - http:
           path: dynamodb-example
           method: get
+  redirectUrl:
+    handler: bin/redirectUrl
+    events:
+      - http:
+          path: redirect-url
+          method: get
+    environment:
+      CLIENT_ID: ${self:custom.secrets.CLIENT_ID}
+      CLIENT_SECRET: ${self:custom.secrets.CLIENT_SECRET}
