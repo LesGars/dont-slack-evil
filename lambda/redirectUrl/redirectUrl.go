@@ -42,12 +42,13 @@ type Response events.APIGatewayProxyResponse
 // Request is of type APIGatewayProxyRequest
 type Request events.APIGatewayProxyRequest
 
-// Handler is our lambda handler invoked by the `lambda.Start` function call
+// Handler is called as part of step 2 of this Oauth flow:
+// https://api.slack.com/docs/oauth
 func Handler(request Request) (Response, error) {
 	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
 	var statusCode int;
 	statusCode = 302;
-	// Get Oauth Access token
+	// Step 3 - Exchanging a verification code for an access token
 	query := request.QueryStringParameters
 	code := query["code"]
 	clientID := os.Getenv("CLIENT_ID")
@@ -75,7 +76,7 @@ func Handler(request Request) (Response, error) {
 		statusCode = 500
 	}
 
-	// Save in DB
+	// Save Access token in DynamoDB
 	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_team_id")
 	if dbError {
