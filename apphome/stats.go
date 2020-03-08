@@ -13,6 +13,7 @@ import (
 )
 
 var thresholdQuality float64 = 0.2
+var thresholdAlert float64 = 50.0
 
 type DSEHomeStats struct {
 	MessagesAnalyzedAllTime                 int     `json:"messagesAnalyzedAllTime"`
@@ -76,45 +77,10 @@ func userProj()	expression.ProjectionBuilder {
 	return expression.NamesList(expression.Name("user_id"))
 }
 
-func UsersWithBadQualityMessages() ([]string, error) {
-	filter := expression.And(sinceBeginningOfQuarterFilt(), badQualityFilt())
-	proj := userProj()
-	expr, buildErr := expression.NewBuilder().WithProjection(proj).WithFilter(filter).Build()
-	if buildErr != nil {
-		log.Println("Got error building expression:")
-		log.Println(buildErr.Error())
-		return []string{}, buildErr
-	}
-
-	input := dynamodb.ScanInput{
-		ExpressionAttributeNames:  expr.Names(),
-		ExpressionAttributeValues: expr.Values(),
-		FilterExpression:          expr.Filter(),
-		ProjectionExpression:	   expr.Projection(),
-		TableName:                 aws.String(os.Getenv("DYNAMODB_TABLE")),
-	}
-	type record struct {
-		UserId string `dynamodbav:"user_id"`
-	}
-	var records []record
-
-	result, scanError := dsedb.Scan(&input)
-
-	if scanError != nil {
-		log.Println(scanError)
-		return []string{}, scanError
-	}
-
-	err := dynamodbattribute.UnmarshalListOfMaps(result.Items, &records)
-
-	if err != nil {
-		log.Println("Got error building expression:")
-		log.Println(err.Error())
-		return []string{}, err
-   }
-   var userIds []string
-   for _, record := range records {
-		userIds = append(userIds, record.UserId)
-   }
-   return userIds, nil
+// HasTooManyBadQualityMessagesLastQuarter returns true if the user sent too many messages of bad quality
+// over the last quarter...
+// TODO replace the stat by PercentageOfMessagesOfBadQualityLastQuarter
+func HasTooManyBadQualityMessagesLastQuarter(userId string) bool {
+	userStats := HomeStatsForUser(userId)
+	return (userStats.PercentageOfMessagesOfBadQualityAllTime)*100 >= thresholdAlert
 }
