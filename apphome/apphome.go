@@ -11,7 +11,6 @@ func UserHome(userId string, userName string) slack.Message {
 	message := slack.NewBlockMessage(
 		append(
 			HomeBasicSections(userName, userId),
-			EnlightenmentSection()...,
 		)...,
 	)
 	message.Msg.Type = "home"
