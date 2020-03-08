@@ -18,14 +18,14 @@ import (
 
 // OauthAccessResponse is the type of the Oauth Access response
 type OauthAccessResponse struct {
-	Ok bool `json:"ok"`
-	AppID string `json:"app_id"`
-	Scope string `json:"scope"`
-	TokenType string `json:"token_type"`
+	Ok          bool   `json:"ok"`
+	AppID       string `json:"app_id"`
+	Scope       string `json:"scope"`
+	TokenType   string `json:"token_type"`
 	AccessToken string `json:"access_token"`
-	BotUserID string `json:"bot_user_id"`
-	Team struct {
-		ID string `json:"id"`
+	BotUserID   string `json:"bot_user_id"`
+	Team        struct {
+		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"team"`
 	Enterprise string `json:"enterprise"`
@@ -33,9 +33,10 @@ type OauthAccessResponse struct {
 
 // OauthTokenDBItem is the struct for storing the access token in DB
 type OauthTokenDBItem struct {
-	TeamID string `json:"team_id"`
+	TeamID      string `json:"team_id"`
 	AccessToken string `json:"access_token"`
 }
+
 // Response is of type APIGatewayProxyResponse
 type Response events.APIGatewayProxyResponse
 
@@ -46,8 +47,8 @@ type Request events.APIGatewayProxyRequest
 // https://api.slack.com/docs/oauth
 func Handler(request Request) (Response, error) {
 	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
-	var statusCode int;
-	statusCode = 302;
+	var statusCode int
+	statusCode = 302
 	// Step 3 - Exchanging a verification code for an access token
 	query := request.QueryStringParameters
 	code := query["code"]
@@ -69,7 +70,7 @@ func Handler(request Request) (Response, error) {
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	var oauthAccessResponse OauthAccessResponse;
+	var oauthAccessResponse OauthAccessResponse
 	unMarshallErr := json.Unmarshal(body, &oauthAccessResponse)
 	if unMarshallErr != nil {
 		log.Println(unMarshallErr)
@@ -79,11 +80,11 @@ func Handler(request Request) (Response, error) {
 	// Save Access token in DynamoDB
 	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_team_id")
-	if dbError {
+	if dbError != nil {
 		log.Println(dbError)
 	}
 	dbItem := dsedb.Team{
-		SlackTeamId: oauthAccessResponse.Team.ID,
+		SlackTeamId:       oauthAccessResponse.Team.ID,
 		SlackBotUserToken: oauthAccessResponse.AccessToken,
 	}
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
