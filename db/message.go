@@ -35,7 +35,7 @@ func NewMessageFromSlack(message *slackevents.MessageEvent, teamId string) (*Mes
 	dbItem := Message{
 		UserId:         message.User,
 		Text:           message.Text,
-		CreatedAt:      time.Unix(int64(timeUnix), 0).Format(time.RFC3339),
+		CreatedAt:      time.Unix(int64(timeUnix), 0).UTC().Format(time.RFC3339),
 		SlackMessageId: message.EventTimeStamp.String(),
 		SlackThreadId:  message.ThreadTimeStamp,
 		SlackTeamId:    teamId,

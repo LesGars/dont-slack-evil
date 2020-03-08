@@ -24,7 +24,7 @@ func TestNewMessageFromSlack(t *testing.T) {
 		SlackTeamId:    "LesGarsHack",
 		Text:           "blabla",
 		Analyzed:       false,
-		CreatedAt:      "2020-03-09T00:04:09+01:00",
+		CreatedAt:      "2020-03-08T23:04:09Z",
 		Quality:        0,
 		Sentiment:      Sentiment{},
 	}
