@@ -11,10 +11,13 @@ import (
 var slackBotUserOauthToken = os.Getenv("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
 var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
 
-func SendNotifications() error {
+// SendNotification loops through all the users and sends a message to those who sent too many
+// messages of bad quality over the last quarter
+func SendNotifications() (int, error) {
+	notificationsSent := 0
 	users, err := slackBotUserApiClient.GetUsers()
 	if err != nil {
-		return err
+		return 0, err
 	}
 	for _, user := range users {
 		userId := user.ID
@@ -28,9 +31,10 @@ func SendNotifications() error {
 				log.Printf("Could not open conversation for user %v: %v", userId, conversationErr)
 			} else {
 				slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText("Too many bad quality messages", false))
+				notificationsSent++
 			}
 		}
 	}
 
-	return nil
+	return notificationsSent, nil
 }

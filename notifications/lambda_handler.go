@@ -16,7 +16,7 @@ type Response events.APIGatewayProxyResponse
 
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func LambdaHandler(ctx context.Context) (Response, error) {
-	err := SendNotifications()
+	_, err := SendNotifications()
 	if err != nil {
 		log.Println(err)
 	  return Response{StatusCode: 500}, err
