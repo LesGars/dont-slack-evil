@@ -21,10 +21,6 @@ import (
 var slackBotUserOauthToken = os.Getenv("SLACK_BOT_USER_OAUTH_ACCESS_TOKEN")
 var slackBotUserApiClient = slack.New(slackBotUserOauthToken)
 
-// If you need anything else, use this client instead
-// var slackOauthToken = os.Getenv("SLACK_OAUTH_ACCESS_TOKEN")
-// var slackRegularApiClient = slack.New(slackOauthToken)
-
 // ParseEvent is the assignation of slackevents.ParseEvent to a variable,
 // in order to make it mockable
 var parseEvent = slackevents.ParseEvent
