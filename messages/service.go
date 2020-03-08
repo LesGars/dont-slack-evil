@@ -2,12 +2,12 @@ package messages
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strings"
-	"time"
+
+	"github.com/pkg/errors"
 
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
@@ -100,26 +100,10 @@ var storeMessage = func(message *slackevents.MessageEvent, apiForTeam ApiForTeam
 	}
 
 	// Save in DB
-	messageBytes, e := json.Marshal(message)
-	if e != nil {
-		return errors.New("Message could not be parsed before saving")
+	dbItem, dbItemErr := dsedb.NewMessageFromSlack(message, apiForTeam.Team.SlackTeamId)
+	if dbItemErr != nil {
+		return errors.WithMessage(dbItemErr, "Could not instanciate a new Message form slack")
 	}
-	timeUnix, _ := message.EventTimeStamp.Int64()
-	log.Printf("Temps timestamp %s", message.EventTimeStamp)
-	log.Printf("Temps unix %d", timeUnix)
-	dbItem := dsedb.Message{
-		UserId:         message.User,
-		Text:           message.Text,
-		CreatedAt:      time.Unix(timeUnix, 0).Format(time.RFC3339),
-		SlackMessageId: message.EventTimeStamp.String(),
-		SlackThreadId:  message.ThreadTimeStamp,
-		SlackTeamId:    apiForTeam.Team.SlackTeamId,
-	}
-	unmarshalError := json.Unmarshal(messageBytes, &dbItem)
-	if unmarshalError != nil {
-		return errors.New("Message could not JSONified")
-	}
-	log.Println(structs.Map(&dbItem))
 
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
