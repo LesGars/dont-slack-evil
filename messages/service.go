@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
@@ -41,7 +42,9 @@ func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
 	log.Printf("Reacting to message event from channel %s", message.Channel)
 	storeMsgError := storeMessage(message)
 	if storeMsgError != nil {
-		return "", storeMsgError
+		if !strings.Contains(storeMsgError.Error(), "Database could not be created") {
+			return "", storeMsgError
+		}
 	}
 
 	getSentimentError := getSentiment(message)
