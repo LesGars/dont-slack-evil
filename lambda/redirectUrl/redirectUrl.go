@@ -45,6 +45,8 @@ type Request events.APIGatewayProxyRequest
 // Handler is our lambda handler invoked by the `lambda.Start` function call
 func Handler(request Request) (Response, error) {
 	structs.DefaultTagName = "json" // https://github.com/fatih/structs/issues/25
+	var statusCode int;
+	statusCode = 302;
 	// Get Oauth Access token
 	query := request.QueryStringParameters
 	code := query["code"]
@@ -62,6 +64,7 @@ func Handler(request Request) (Response, error) {
 	)
 	if err != nil {
 		log.Println(err)
+		statusCode = 500
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -69,6 +72,7 @@ func Handler(request Request) (Response, error) {
 	unMarshallErr := json.Unmarshal(body, &oauthAccessResponse)
 	if unMarshallErr != nil {
 		log.Println(unMarshallErr)
+		statusCode = 500
 	}
 
 	// Save in DB
@@ -76,6 +80,7 @@ func Handler(request Request) (Response, error) {
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_team_id")
 	if dbError {
 		log.Println(dbError)
+		statusCode = 500
 	}
 	dbItem := dsedb.Team{
 		SlackTeamId: oauthAccessResponse.Team.ID,
@@ -84,6 +89,7 @@ func Handler(request Request) (Response, error) {
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
 		log.Println("Could not store message in DB")
+		statusCode = 500
 	} else {
 		log.Println("Oauth Access token was stored successfully")
 	}
@@ -91,7 +97,7 @@ func Handler(request Request) (Response, error) {
 	// Redirect to slack workspace URL
 	redirectURL := "https://app.slack.com/client/" + oauthAccessResponse.Team.ID
 	response := Response{
-		StatusCode: 302,
+		StatusCode: statusCode,
 		Headers: map[string]string{
 			"Location": redirectURL,
 		},
