@@ -34,7 +34,7 @@ func SendNotifications() (int, error) {
 				if conversationErr != nil {
 					log.Printf("Could not open conversation for user %v: %v", userId, conversationErr)
 				} else {
-					slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText("Too many bad quality messages", false))
+					slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText("Hello! It looks like you sent too many negative messages over the last quarter", false))
 					notificationsSent++
 				}
 			}

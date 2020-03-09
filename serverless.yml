@@ -66,8 +66,6 @@ functions:
       - http:
           path: notifications
           method: get
-    environment:
-      SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN}
   dynamodbExample:
     handler: bin/dynamodb-example
     events:
