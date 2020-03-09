@@ -60,6 +60,12 @@ functions:
       PD_API_URL: ${self:custom.secrets.PD_API_URL}
       PD_API_KEY: ${self:custom.secrets.PD_API_KEY}
       SLACK_VERIFICATION_TOKEN: ${self:custom.secrets.SLACK_VERIFICATION_TOKEN}
+  notifications:
+    handler: bin/notifications
+    events:
+      - http:
+          path: notifications
+          method: get
   dynamodbExample:
     handler: bin/dynamodb-example
     events:

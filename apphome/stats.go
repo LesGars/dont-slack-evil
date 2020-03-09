@@ -13,6 +13,7 @@ import (
 )
 
 var thresholdQuality float64 = 0.2
+var thresholdAlert float64 = 50.0
 
 type DSEHomeStats struct {
 	MessagesAnalyzedAllTime                 int     `json:"messagesAnalyzedAllTime"`
@@ -79,4 +80,12 @@ func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 		return 0
 	}
 	return val
+}
+
+// HasTooManyBadQualityMessagesLastQuarter returns true if the user sent too many messages of bad quality
+// over the last quarter...
+// TODO replace the stat by PercentageOfMessagesOfBadQualityLastQuarter
+func HasTooManyBadQualityMessagesLastQuarter(userId string) bool {
+	userStats := HomeStatsForUser(userId)
+	return (userStats.PercentageOfMessagesOfBadQualitySinceQuarter)*100 >= thresholdAlert
 }

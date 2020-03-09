@@ -118,6 +118,14 @@ func Get(tableName string, key map[string]*dynamodb.AttributeValue) (*dynamodb.G
 	})
 }
 
+// Get all items in a table
+func GetAll(tableName string) (*dynamodb.ScanOutput, error) {
+	input := dynamodb.ScanInput{
+		TableName:                 aws.String(tableName),
+	}
+	return Scan(&input)
+}
+
 // Convert a DynamoDB scan output to an integer
 func ScanToInt(result *dynamodb.ScanOutput, err error) (int, error) {
 	return int(*result.Count), nil

@@ -68,3 +68,22 @@ func FindTeamById(id string) (*Team, error) {
 
 	return &team, unMarshallErr
 }
+
+func GetTeams() ([]*Team, error) {
+	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "teams"
+
+	out, err := GetAll(tableName)
+
+	if err != nil {
+		log.Println(err)
+		return []*Team{}, err
+	}
+	var teams []*Team
+	unmarshalErr := dynamodbattribute.UnmarshalListOfMaps(out.Items, &teams)
+
+	if unmarshalErr != nil {
+		log.Printf("Error retrieving all teams")
+		return nil, unmarshalErr
+	}
+	return teams, nil
+}
