@@ -87,5 +87,5 @@ func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 // TODO replace the stat by PercentageOfMessagesOfBadQualityLastQuarter
 func HasTooManyBadQualityMessagesLastQuarter(userId string) bool {
 	userStats := HomeStatsForUser(userId)
-	return (userStats.PercentageOfMessagesOfBadQualityAllTime)*100 >= thresholdAlert
+	return (userStats.PercentageOfMessagesOfBadQualitySinceQuarter)*100 >= thresholdAlert
 }
