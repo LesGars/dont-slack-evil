@@ -23,6 +23,9 @@ Don't Slack Evil is the submission of the team "Les Gars" for the [2020 Slack Ap
   ```
 3) Set up secret file: `cp example.secrets.dev.yml secrets.dev.yml` and fill the secrets
 4) Deploy: `make deploy`
+5) Configure your Slack app with your function URLs
+  - event subscriptions : use the /messages endpoint
+  - interactive components : use the /interactive endpoint
 
 # Requirements
 * [golang](https://golang.org/dl/) >= 1.13
