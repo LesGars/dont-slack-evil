@@ -44,15 +44,15 @@ func statsSections(userId string) []slack.Block {
 			*All time*
 			Number of analyzed messages: %d
 			Number of messages of bad quality : %d
-			%% of messages of bad quality : %f
+			%% of messages of bad quality : %d%%
 			*Current Quarter*
 			(ends in %d days)
 			Number of analyzed messages: %d
 			Number of messages of bad quality : %d
-			%% of messages of bad quality : %f`,
-			stats.MessagesAnalyzedAllTime, stats.MessagesOfBadQualityAllTime, stats.PercentageOfMessagesOfBadQualityAllTime,
+			%% of messages of bad quality : %d%%`,
+			stats.MessagesAnalyzedAllTime, stats.MessagesOfBadQualityAllTime, int(stats.PercentageOfMessagesOfBadQualityAllTime*100),
 			42,
-			stats.MessagesAnalyzedSinceQuarter, stats.MessagesOfBadQualitySinceQuarter, stats.PercentageOfMessagesOfBadQualitySinceQuarter,
+			stats.MessagesAnalyzedSinceQuarter, stats.MessagesOfBadQualitySinceQuarter, int(stats.PercentageOfMessagesOfBadQualitySinceQuarter*100),
 		)),
 		false, false,
 	)
