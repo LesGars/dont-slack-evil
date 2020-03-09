@@ -27,7 +27,7 @@ func DynamoDBClient() *dynamodb.DynamoDB {
 }
 
 // CreateTableIfNotCreated creates DynamoDB table if it doesn't exist
-func CreateTableIfNotCreated(tableName string, mainKey string) bool {
+func CreateTableIfNotCreated(tableName string, mainKey string) error {
 	createTableInput := &dynamodb.CreateTableInput{
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
@@ -48,12 +48,12 @@ func CreateTableIfNotCreated(tableName string, mainKey string) bool {
 	if createTableErr != nil {
 		if !strings.Contains(createTableErr.Error(), "Table already exists") {
 			log.Println(createTableErr.Error())
-			return false
+			return createTableErr
 		}
 	} else {
 		log.Println("Created the table", tableName)
 	}
-	return true
+	return nil
 }
 
 // Store an item in the database

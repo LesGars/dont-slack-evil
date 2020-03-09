@@ -2,10 +2,12 @@ package messages
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
+	"strings"
+
+	"github.com/pkg/errors"
 
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
@@ -33,15 +35,16 @@ var postMessage = slackBotUserApiClient.PostMessage
 // in order to make it mockable
 var publishView = slackBotUserApiClient.PublishView
 
-var getUserInfo = slackBotUserApiClient.GetUserInfo
-
 var userHome = apphome.UserHome
 
-func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
+func analyzeMessage(message *slackevents.MessageEvent, apiForTeam ApiForTeam) (string, error) {
 	log.Printf("Reacting to message event from channel %s", message.Channel)
-	storeMsgError := storeMessage(message)
+	storeMsgError := storeMessage(message, apiForTeam)
 	if storeMsgError != nil {
-		return "", storeMsgError
+		if !strings.Contains(storeMsgError.Error(), "Database could not be created") {
+			return "", storeMsgError
+		}
+		log.Printf("Could not save initial message %s", storeMsgError)
 	}
 
 	getSentimentError := getSentiment(message)
@@ -66,11 +69,15 @@ func yesHello(message *slackevents.AppMentionEvent, apiForTeam ApiForTeam) (stri
 func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (string, error) {
 	log.Println("Reacting to app home request event")
 	userID := ev.User
-	user, getUserInfoErr := getUserInfo(userID)
+	var userName string
+	user, getUserInfoErr := apiForTeam.SlackBotUserApiClient.GetUserInfo(userID)
 	if getUserInfoErr != nil {
-		log.Println(getUserInfoErr)
+		log.Printf("Error getting user ID %+v", getUserInfoErr)
+		// Fallback to empty string
+	} else {
+		userName = user.RealName
 	}
-	userName := user.RealName
+
 	homeViewForUser := slack.HomeTabViewRequest{
 		Type:   "home",
 		Blocks: userHome(userID, userName).Blocks,
@@ -79,38 +86,26 @@ func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (s
 	log.Printf("Sending view %s", homeViewAsJson)
 	_, publishViewError := apiForTeam.SlackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
 	if publishViewError != nil {
-		log.Println(publishViewError)
+		log.Printf("Error updating the app home: %+v", publishViewError)
 		return "", publishViewError
 	}
 
 	return "", nil
 }
 
-var storeMessage = func(message *slackevents.MessageEvent) error {
+var storeMessage = func(message *slackevents.MessageEvent, apiForTeam ApiForTeam) error {
 	// Create DB
 	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_message_id")
-	if dbError {
-		return errors.New("Database could not be created")
+	if dbError != nil {
+		return dbError
 	}
 
 	// Save in DB
-	messageBytes, e := json.Marshal(message)
-	if e != nil {
-		return errors.New("Message could not be parsed before saving")
+	dbItem, dbItemErr := dsedb.NewMessageFromSlack(message, apiForTeam.Team.SlackTeamId)
+	if dbItemErr != nil {
+		return errors.WithMessage(dbItemErr, "Could not instanciate a new Message form slack")
 	}
-	dbItem := dsedb.Message{
-		UserId:         message.User,
-		Text:           message.Text,
-		CreatedAt:      message.EventTimeStamp.String(),
-		SlackMessageId: message.EventTimeStamp.String(),
-		SlackThreadId:  message.ThreadTimeStamp,
-	}
-	unmarshalError := json.Unmarshal(messageBytes, &dbItem)
-	if unmarshalError != nil {
-		return errors.New("Message could not JSONified")
-	}
-	log.Println(structs.Map(&dbItem))
 
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {

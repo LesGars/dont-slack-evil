@@ -11,7 +11,6 @@ func UserHome(userId string, userName string) slack.Message {
 	message := slack.NewBlockMessage(
 		append(
 			HomeBasicSections(userName, userId),
-			EnlightenmentSection()...,
 		)...,
 	)
 	message.Msg.Type = "home"
@@ -45,29 +44,20 @@ func statsSections(userId string) []slack.Block {
 			*All time*
 			Number of analyzed messages: %d
 			Number of messages of bad quality : %d
-			%% of messages of bad quality : %f
+			%% of messages of bad quality : %d%%
 			*Current Quarter*
 			(ends in %d days)
 			Number of analyzed messages: %d
 			Number of messages of bad quality : %d
-			%% of messages of bad quality : %f`,
-			stats.MessagesAnalyzedAllTime, stats.MessagesOfBadQualityAllTime, stats.PercentageOfMessagesOfBadQualityAllTime,
+			%% of messages of bad quality : %d%%`,
+			stats.MessagesAnalyzedAllTime, stats.MessagesOfBadQualityAllTime, int(stats.PercentageOfMessagesOfBadQualityAllTime*100),
 			42,
-			stats.MessagesAnalyzedLastQuarter, stats.MessagesOfBadQualityLastQuarter, stats.PercentageOfMessagesOfBadQualityLastQuarter,
+			stats.MessagesAnalyzedSinceQuarter, stats.MessagesOfBadQualitySinceQuarter, int(stats.PercentageOfMessagesOfBadQualitySinceQuarter*100),
 		)),
 		false, false,
 	)
 
-	topChannelsText := slack.NewTextBlockObject("mrkdwn",
-		heredoc.Doc(fmt.Sprintf(`
-			*Top Channels with evil messages*
-			:airplane: General · 30%% (142)
-			:taxi: Code Reviews · 66%% (43)
-			:knife_fork_plate: Direct Messages · 18%% (75)`,
-		)),
-		false, false,
-	)
-	fields := []*slack.TextBlockObject{messageStats, topChannelsText}
+	fields := []*slack.TextBlockObject{messageStats}
 	statsSection := slack.NewSectionBlock(nil, fields, nil)
 	return []slack.Block{statsSection, slack.NewDividerBlock()}
 }

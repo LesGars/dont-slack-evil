@@ -49,7 +49,16 @@ functions:
     environment:
       PD_API_URL: ${self:custom.secrets.PD_API_URL}
       PD_API_KEY: ${self:custom.secrets.PD_API_KEY}
-      SLACK_BOT_USER_OAUTH_ACCESS_TOKEN: ${self:custom.secrets.SLACK_BOT_USER_OAUTH_ACCESS_TOKEN}
+      SLACK_VERIFICATION_TOKEN: ${self:custom.secrets.SLACK_VERIFICATION_TOKEN}
+  interactive:
+    handler: bin/interactive
+    events:
+      - http:
+          path: interactive
+          method: post
+    environment:
+      PD_API_URL: ${self:custom.secrets.PD_API_URL}
+      PD_API_KEY: ${self:custom.secrets.PD_API_KEY}
       SLACK_VERIFICATION_TOKEN: ${self:custom.secrets.SLACK_VERIFICATION_TOKEN}
   notifications:
     handler: bin/notifications
