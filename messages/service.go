@@ -35,8 +35,6 @@ var postMessage = slackBotUserApiClient.PostMessage
 // in order to make it mockable
 var publishView = slackBotUserApiClient.PublishView
 
-var getUserInfo = slackBotUserApiClient.GetUserInfo
-
 var userHome = apphome.UserHome
 
 func analyzeMessage(message *slackevents.MessageEvent, apiForTeam ApiForTeam) (string, error) {
@@ -71,11 +69,15 @@ func yesHello(message *slackevents.AppMentionEvent, apiForTeam ApiForTeam) (stri
 func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (string, error) {
 	log.Println("Reacting to app home request event")
 	userID := ev.User
-	user, getUserInfoErr := getUserInfo(userID)
+	var userName string
+	user, getUserInfoErr := apiForTeam.SlackBotUserApiClient.GetUserInfo(userID)
 	if getUserInfoErr != nil {
-		log.Println(getUserInfoErr)
+		log.Printf("Error getting user ID %+v", getUserInfoErr)
+		// Fallback to empty string
+	} else {
+		userName = user.RealName
 	}
-	userName := user.RealName
+
 	homeViewForUser := slack.HomeTabViewRequest{
 		Type:   "home",
 		Blocks: userHome(userID, userName).Blocks,
@@ -84,7 +86,7 @@ func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (s
 	log.Printf("Sending view %s", homeViewAsJson)
 	_, publishViewError := apiForTeam.SlackBotUserApiClient.PublishView(ev.User, homeViewForUser, ev.View.Hash)
 	if publishViewError != nil {
-		log.Println(publishViewError)
+		log.Printf("Error updating the app home: %+v", publishViewError)
 		return "", publishViewError
 	}
 

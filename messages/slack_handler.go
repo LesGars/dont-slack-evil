@@ -24,6 +24,7 @@ type SlackApiInterface interface {
 	// This interface is meant to make a *slack.Client mockable easily
 	PostMessage(channelID string, options ...slack.MsgOption) (string, string, error)
 	PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error)
+	GetUserInfo(user string) (*slack.User, error)
 }
 
 // SlackHandler uses Slack's Event API to respond to an event emitted by our application
