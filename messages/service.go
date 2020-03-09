@@ -2,11 +2,12 @@ package messages
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/pkg/errors"
 
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
@@ -38,13 +39,14 @@ var getUserInfo = slackBotUserApiClient.GetUserInfo
 
 var userHome = apphome.UserHome
 
-func analyzeMessage(message *slackevents.MessageEvent) (string, error) {
+func analyzeMessage(message *slackevents.MessageEvent, apiForTeam ApiForTeam) (string, error) {
 	log.Printf("Reacting to message event from channel %s", message.Channel)
-	storeMsgError := storeMessage(message)
+	storeMsgError := storeMessage(message, apiForTeam)
 	if storeMsgError != nil {
 		if !strings.Contains(storeMsgError.Error(), "Database could not be created") {
 			return "", storeMsgError
 		}
+		log.Printf("Could not save initial message %s", storeMsgError)
 	}
 
 	getSentimentError := getSentiment(message)
@@ -89,31 +91,19 @@ func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (s
 	return "", nil
 }
 
-var storeMessage = func(message *slackevents.MessageEvent) error {
+var storeMessage = func(message *slackevents.MessageEvent, apiForTeam ApiForTeam) error {
 	// Create DB
 	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_message_id")
-	if dbError {
-		return errors.New("Database could not be created")
+	if dbError != nil {
+		return dbError
 	}
 
 	// Save in DB
-	messageBytes, e := json.Marshal(message)
-	if e != nil {
-		return errors.New("Message could not be parsed before saving")
+	dbItem, dbItemErr := dsedb.NewMessageFromSlack(message, apiForTeam.Team.SlackTeamId)
+	if dbItemErr != nil {
+		return errors.WithMessage(dbItemErr, "Could not instanciate a new Message form slack")
 	}
-	dbItem := dsedb.Message{
-		UserId:         message.User,
-		Text:           message.Text,
-		CreatedAt:      message.EventTimeStamp.String(),
-		SlackMessageId: message.EventTimeStamp.String(),
-		SlackThreadId:  message.ThreadTimeStamp,
-	}
-	unmarshalError := json.Unmarshal(messageBytes, &dbItem)
-	if unmarshalError != nil {
-		return errors.New("Message could not JSONified")
-	}
-	log.Println(structs.Map(&dbItem))
 
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {

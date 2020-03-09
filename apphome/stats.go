@@ -4,6 +4,7 @@ import (
 	dsedb "dont-slack-evil/db"
 	"log"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -18,20 +19,27 @@ type DSEHomeStats struct {
 	MessagesOfBadQualityAllTime             int     `json:"messagesOfBadQualityAllTime"`
 	PercentageOfMessagesOfBadQualityAllTime float64 `json:"percentageOfMessagesOfBadQualityAllTime"`
 
-	MessagesAnalyzedLastQuarter                 int     `json:"messagesAnalyzedLastQuarter"`
-	MessagesOfBadQualityLastQuarter             int     `json:"messagesOfBadQualityLastQuarter"`
-	PercentageOfMessagesOfBadQualityLastQuarter float64 `json:"percentageOfMessagesOfBadQualityLastQuarter"`
+	MessagesAnalyzedSinceQuarter                 int     `json:"messagesAnalyzedLastQuarter"`
+	MessagesOfBadQualitySinceQuarter             int     `json:"messagesOfBadQualityLastQuarter"`
+	PercentageOfMessagesOfBadQualitySinceQuarter float64 `json:"percentageOfMessagesOfBadQualityLastQuarter"`
 }
 
 func HomeStatsForUser(userId string) DSEHomeStats {
 	userIdFilt := userIdFilt(userId)
 	badQualityFilt := badQualityFilt()
+	sinceBeginningOfQuarterFilt := sinceBeginningOfQuarterFilt()
 	stats := DSEHomeStats{
 		MessagesAnalyzedAllTime:     messagesAnalyzed(userIdFilt),
 		MessagesOfBadQualityAllTime: messagesAnalyzed(expression.And(badQualityFilt, userIdFilt)),
+
+		MessagesAnalyzedSinceQuarter:     messagesAnalyzed(expression.And(userIdFilt, sinceBeginningOfQuarterFilt)),
+		MessagesOfBadQualitySinceQuarter: messagesAnalyzed(expression.And(badQualityFilt, userIdFilt, sinceBeginningOfQuarterFilt)),
 	}
 	if stats.MessagesAnalyzedAllTime != 0 {
 		stats.PercentageOfMessagesOfBadQualityAllTime = float64(stats.MessagesOfBadQualityAllTime) / float64(stats.MessagesAnalyzedAllTime)
+	}
+	if stats.MessagesAnalyzedSinceQuarter != 0 {
+		stats.PercentageOfMessagesOfBadQualitySinceQuarter = float64(stats.MessagesOfBadQualitySinceQuarter) / float64(stats.MessagesAnalyzedSinceQuarter)
 	}
 	return stats
 }
@@ -45,7 +53,9 @@ func badQualityFilt() expression.ConditionBuilder {
 }
 
 func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {
-	return expression.GreaterThan(expression.Name("written_at"), expression.Value(now.BeginningOfQuarter()))
+	// It's possible to use ISO8601 string format with Geater than cf https://www.abhayachauhan.com/2017/12/how-to-store-dates-or-timestamps-in-dynamodb/
+	// RFC3339 is some standard based on and stricter than ISO8601
+	return expression.GreaterThan(expression.Name("created_at"), expression.Value(now.BeginningOfQuarter().Format(time.RFC3339)))
 }
 
 func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {

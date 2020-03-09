@@ -48,10 +48,6 @@ func TestHomeBasicSections(t *testing.T) {
 						{
 							"type": "mrkdwn",
 							"text": "*All time*\nNumber of analyzed messages: 0\nNumber of messages of bad quality : 0\n% of messages of bad quality : 0.000000\n*Current Quarter*\n(ends in 42 days)\nNumber of analyzed messages: 0\nNumber of messages of bad quality : 0\n% of messages of bad quality : 0.000000"
-						},
-						{
-							"type": "mrkdwn",
-							"text": "*Top Channels with evil messages*\n:airplane: General · 30% (142)\n:taxi: Code Reviews · 66% (43)\n:knife_fork_plate: Direct Messages · 18% (75)"
 						}
 					]
 				},
