@@ -49,7 +49,7 @@ func userIdFilt(userId string) expression.ConditionBuilder {
 }
 
 func badQualityFilt() expression.ConditionBuilder {
-	return expression.LessThan(expression.Name("sentiment.negative"), expression.Value(thresholdQuality))
+	return expression.GreaterThan(expression.Name("sentiment.negative"), expression.Value(thresholdQuality))
 }
 
 func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {

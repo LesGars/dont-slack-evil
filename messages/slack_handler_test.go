@@ -73,7 +73,10 @@ func (ds WorkingDummySlackClient) PostMessage(channelID string, options ...slack
 	return "", "", nil
 }
 func (ds WorkingDummySlackClient) PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
-	return nil, errors.New("Error-Mock")
+	return &slack.ViewResponse{}, nil
+}
+func (ds WorkingDummySlackClient) GetUserInfo(user string) (*slack.User, error) {
+	return &slack.User{Name: "Le gars"}, nil
 }
 
 // If parseEvent returns an event of type AppMentionEvent and the POST message succeeds, the handler should return nil and nil
