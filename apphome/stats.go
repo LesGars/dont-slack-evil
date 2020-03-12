@@ -59,6 +59,17 @@ func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {
 	return expression.GreaterThan(expression.Name("created_at"), expression.Value(now.BeginningOfQuarter().Format(time.RFC3339)))
 }
 
+// GetWeeklyPositivityScore gets the weekly positivity score of a user
+func GetWeeklyPositivityScore(userID string) float64 {
+	userIDFilt := userIdFilt(userID)
+	badQualityFilt := badQualityFilt()
+	badMessages := messagesAnalyzed(expression.And(badQualityFilt, userIDFilt))
+	totalMessages := messagesAnalyzed(userIDFilt)
+	positivityScore := 1 - float64(badMessages) / float64(totalMessages)
+	log.Println(badMessages, totalMessages, positivityScore)
+	return positivityScore
+}
+
 func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 	expr, buildErr := expression.NewBuilder().WithFilter(userIdFilt).Build()
 	if buildErr != nil {

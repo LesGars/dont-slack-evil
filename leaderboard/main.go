@@ -27,10 +27,10 @@ func SendLeaderboardNotification() (int, error) {
 			log.Printf("Could not instantiate bot client for team %v", team.SlackTeamId)
 			continue
 		}
-		log.Println(team.SlackTeamId)
 		type UserScore struct {
-			userID string
-			userScore float64
+			ID string
+			Name string
+			Score float64
 		}
 		var userScores []UserScore;
 		for _, user := range users {
@@ -39,6 +39,12 @@ func SendLeaderboardNotification() (int, error) {
 			if (len(user.Profile.BotID) == 0) {
 				log.Println(user.RealName)
 				log.Println(user.ID)
+				userScore := UserScore{
+					ID: user.ID,
+					Name: user.RealName,
+					Score: apphome.GetWeeklyPositivityScore(user.ID),
+				}
+				userScores = append(userScores, userScore)
 			}
 		}
 	}
