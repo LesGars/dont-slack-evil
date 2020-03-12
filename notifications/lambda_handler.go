@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
 )
 
 // Response is of type APIGatewayProxyResponse since we're leveraging the
@@ -14,7 +13,7 @@ import (
 // https://serverless.com/framework/docs/providers/aws/events/apigateway/#lambda-proxy-integration
 type Response events.APIGatewayProxyResponse
 
-// Handler is our lambda handler invoked by the `lambda.Start` function call
+// LambdaHandler is our lambda handler invoked by the `lambda.Start` function call
 func LambdaHandler(ctx context.Context) (Response, error) {
 	_, err := SendNotifications()
 	if err != nil {
@@ -31,6 +30,19 @@ func LambdaHandler(ctx context.Context) (Response, error) {
 	}, nil
 }
 
-func main() {
-	lambda.Start(LambdaHandler)
+// LambdaHandlerLeaderboard handles leaderboard notifications
+func LambdaHandlerLeaderboard(ctx context.Context) (Response, error) {
+	_, err := SendLeaderboardNotification()
+	if err != nil {
+		log.Println(err)
+	  return Response{StatusCode: 500}, err
+	}
+
+	return Response{
+		StatusCode:      204,
+		IsBase64Encoded: false,
+		Headers: map[string]string{
+			"Content-Type":           "text",
+		},
+	}, nil
 }
