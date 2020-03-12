@@ -2,6 +2,7 @@ package leaderboard
 
 import (
 	"log"
+	"sort"
 
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
@@ -37,8 +38,6 @@ func SendLeaderboardNotification() (int, error) {
 			// This is the best way I found to distinguish bots from real users
 			// Note that user.IsBot doesn't work because it's false even for bot users...
 			if (len(user.Profile.BotID) == 0) {
-				log.Println(user.RealName)
-				log.Println(user.ID)
 				userScore := UserScore{
 					ID: user.ID,
 					Name: user.RealName,
@@ -47,6 +46,10 @@ func SendLeaderboardNotification() (int, error) {
 				userScores = append(userScores, userScore)
 			}
 		}
+		sort.Slice(userScores, func(i, j int) bool {
+			return userScores[i].Score > userScores[j].Score
+		})
+		log.Println(userScores)
 	}
 
 	return notificationsSent, nil
