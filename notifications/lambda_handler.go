@@ -29,20 +29,3 @@ func LambdaHandler(ctx context.Context) (Response, error) {
 		},
 	}, nil
 }
-
-// LambdaHandlerLeaderboard handles leaderboard notifications
-func LambdaHandlerLeaderboard(ctx context.Context) (Response, error) {
-	_, err := SendLeaderboardNotification()
-	if err != nil {
-		log.Println(err)
-	  return Response{StatusCode: 500}, err
-	}
-
-	return Response{
-		StatusCode:      204,
-		IsBase64Encoded: false,
-		Headers: map[string]string{
-			"Content-Type":           "text",
-		},
-	}, nil
-}

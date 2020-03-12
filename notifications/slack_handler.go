@@ -43,9 +43,3 @@ func SendNotifications() (int, error) {
 
 	return notificationsSent, nil
 }
-
-// SendLeaderboardNotification sends the leaderboard notification
-func SendLeaderboardNotification() (int, error) {
-	log.Println("Hi Im here")
-	return 0, nil
-}
