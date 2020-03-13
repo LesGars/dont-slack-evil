@@ -41,8 +41,6 @@ func SendLeaderboardNotification() (int, error) {
 		for _, user := range users {
 			// This is the best way I found to distinguish bots from real users
 			// Note that user.IsBot doesn't work because it's false even for bot users...
-			log.Println(user.RealName)
-			log.Println(user.Profile.BotID)
 			if (len(user.Profile.BotID) == 0) {
 				good, total := apphome.GetWeeklyStats(user.ID)
 				var score float64;
@@ -97,6 +95,19 @@ func SendLeaderboardNotification() (int, error) {
 				userScores[2].Good,
 				userScores[2].Total,
 			)
+		}
+		params := slack.GetConversationsParameters {
+			Types: []string{"public_channel"},
+		}
+		channels, _, channelErr := slackBotUserApiClient.GetConversations(&params)
+		if (channelErr != nil) {
+			return 0, channelErr
+		}
+		for _, channel := range channels {
+			if (channel.IsMember && channel.IsGeneral) {
+				slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText(text, false))
+				notificationsSent++
+			}
 		}
 	}
 
