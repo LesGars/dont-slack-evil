@@ -41,8 +41,8 @@ func SendLeaderboardNotification() (int, error) {
 		var userScores []UserScore;
 		for _, user := range users {
 			// This is the best way I found to distinguish bots from real users
-			// Note that user.IsBot doesn't work because it's false even for bot users...
-			if (len(user.Profile.BotID) == 0) {
+			// Note that user.IsBot doesn't work because it's false even for some bot users...
+			if (len(user.Profile.BotID) == 0 && user.Name != "slackbot") {
 				good, total := apphome.GetWeeklyStats(user.ID)
 				var score float64;
 				if (total > 0) {
