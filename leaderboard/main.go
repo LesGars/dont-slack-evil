@@ -33,17 +33,30 @@ func SendLeaderboardNotification() (int, error) {
 		type UserScore struct {
 			ID string
 			Name string
+			Good int
+			Total int
 			Score float64
 		}
 		var userScores []UserScore;
 		for _, user := range users {
 			// This is the best way I found to distinguish bots from real users
 			// Note that user.IsBot doesn't work because it's false even for bot users...
+			log.Println(user.RealName)
+			log.Println(user.Profile.BotID)
 			if (len(user.Profile.BotID) == 0) {
+				good, total := apphome.GetWeeklyStats(user.ID)
+				var score float64;
+				if (total > 0) {
+					score = float64(good) / float64(total)
+				} else {
+					score = 0
+				}
 				userScore := UserScore{
 					ID: user.ID,
 					Name: user.RealName,
-					Score: apphome.GetWeeklyPositivityScore(user.ID),
+					Good: good,
+					Total: total,
+					Score: score,
 				}
 				userScores = append(userScores, userScore)
 			}

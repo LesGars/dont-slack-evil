@@ -53,22 +53,24 @@ func badQualityFilt() expression.ConditionBuilder {
 	return expression.GreaterThan(expression.Name("sentiment.negative"), expression.Value(thresholdQuality))
 }
 
+func fromLastWeekFilt() expression.ConditionBuilder {
+	return expression.GreaterThan(expression.Name("created_at"), expression.Value(now.BeginningOfWeek().Format(time.RFC3339)))
+}
+
 func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {
 	// It's possible to use ISO8601 string format with Geater than cf https://www.abhayachauhan.com/2017/12/how-to-store-dates-or-timestamps-in-dynamodb/
 	// RFC3339 is some standard based on and stricter than ISO8601
 	return expression.GreaterThan(expression.Name("created_at"), expression.Value(now.BeginningOfQuarter().Format(time.RFC3339)))
 }
 
-// GetWeeklyPositivityScore gets the weekly positivity score of a user
-func GetWeeklyPositivityScore(userID string) float64 {
+// GetWeeklyStats gets the weekly positivity score of a user
+func GetWeeklyStats(userID string) (int, int) {
 	userIDFilt := userIdFilt(userID)
 	badQualityFilt := badQualityFilt()
 	badMessages := messagesAnalyzed(expression.And(badQualityFilt, userIDFilt))
 	totalMessages := messagesAnalyzed(userIDFilt)
-	if (totalMessages > 0) {
-		return 1 - float64(badMessages) / float64(totalMessages)
-	}
-	return 0
+	goodMessages := totalMessages - badMessages
+	return goodMessages, totalMessages
 }
 
 func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
