@@ -109,11 +109,20 @@ func SendLeaderboardNotification() (int, error) {
 			log.Println(channelErr)
 			continue
 		}
+		var foundGeneralChannel = false;
 		for _, channel := range channels {
 			if (channel.IsMember && channel.IsGeneral) {
-				slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText(text, false))
+				foundGeneralChannel = true
+				log.Println("Sending message to channel", channel.Name, "for team", team.SlackTeamId)
+				_, _, postError := slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText(text, false))
+				if (postError != nil) {
+					log.Println(postError)
+				}
 				notificationsSent++
 			}
+		}
+		if (!foundGeneralChannel) {
+			log.Println("Bot cannot post is the general channel, please invite it")
 		}
 	}
 
