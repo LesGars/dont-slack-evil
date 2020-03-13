@@ -54,7 +54,9 @@ func badQualityFilt() expression.ConditionBuilder {
 }
 
 func fromLastWeekFilt() expression.ConditionBuilder {
-	return expression.GreaterThan(expression.Name("created_at"), expression.Value(now.BeginningOfWeek().Format(time.RFC3339)))
+	now := time.Now()
+	lastWeek := now.AddDate(0, 0, -7)
+	return expression.GreaterThan(expression.Name("created_at"), expression.Value(lastWeek.Format(time.RFC3339)))
 }
 
 func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {
@@ -67,9 +69,7 @@ func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {
 func GetWeeklyStats(userID string) (int, int) {
 	userIDFilt := userIdFilt(userID)
 	badQualityFilt := badQualityFilt()
-	now := time.Now()
-	lastWeek := now.AddDate(0, 0, -7)
-	lastWeekFilt := expression.GreaterThan(expression.Name("created_at"), expression.Value(lastWeek.Format(time.RFC3339)))
+	lastWeekFilt := fromLastWeekFilt()
 	badMessages := messagesAnalyzed(expression.And(badQualityFilt, userIDFilt, lastWeekFilt))
 	totalMessages := messagesAnalyzed(expression.And(userIDFilt, lastWeekFilt))
 	goodMessages := totalMessages - badMessages
