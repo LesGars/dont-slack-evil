@@ -65,9 +65,39 @@ func SendLeaderboardNotification() (int, error) {
 		sort.Slice(userScores, func(i, j int) bool {
 			return userScores[i].Score > userScores[j].Score
 		})
-		log.Println(userScores)
-		top3 := userScores[:3]
-		log.Println(top3)
+		var text = "*Weekly positivity rankings:*"
+		if (len(userScores) > 0) {
+			text += fmt.Sprintf(
+				"\n\nCongratulations to <@%s> for being the most positive person this week :tada:",
+				userScores[0].ID,
+			)
+			text += "\n\nHere are the standings:"
+			text += fmt.Sprintf(
+				"\n:first_place_medal: <@%s> with a %.2f score (%d / %d)",
+				userScores[0].ID,
+				userScores[0].Score * 100,
+				userScores[0].Good,
+				userScores[0].Total,
+			)
+		}
+		if (len(userScores) > 1) {
+			text += fmt.Sprintf(
+				"\n:second_place_medal: <@%s> with a %.2f score (%d / %d)",
+				userScores[1].ID,
+				userScores[1].Score * 100,
+				userScores[1].Good,
+				userScores[1].Total,
+			)
+		}
+		if (len(userScores) > 2) {
+			text += fmt.Sprintf(
+				"\n:third_place_medal: <@%s> with a %.2f score (%d / %d)",
+				userScores[2].ID,
+				userScores[2].Score * 100,
+				userScores[2].Good,
+				userScores[2].Total,
+			)
+		}
 	}
 
 	return notificationsSent, nil
