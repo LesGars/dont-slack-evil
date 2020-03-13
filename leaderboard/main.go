@@ -31,10 +31,6 @@ func SendLeaderboardNotification() (int, error) {
 	}
 	for _, team := range teams {
 		log.Println("Analyzing weekly messages from team", team.SlackTeamId)
-		// FIXME: remove
-		// if (team.SlackTeamId != "TU7KB9FB9") {
-		// 	continue
-		// }
 		slackBotUserApiClient := slack.New(team.SlackBotUserToken)
 		users, err := slackBotUserApiClient.GetUsers()
 		if err != nil {
@@ -109,20 +105,16 @@ func SendLeaderboardNotification() (int, error) {
 			log.Println(channelErr)
 			continue
 		}
-		var foundGeneralChannel = false;
 		for _, channel := range channels {
-			if (channel.IsMember && channel.IsGeneral) {
-				foundGeneralChannel = true
-				log.Println("Sending message to channel", channel.Name, "for team", team.SlackTeamId)
+			if (channel.IsGeneral) {
 				_, _, postError := slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText(text, false))
 				if (postError != nil) {
 					log.Println(postError)
+				} else {
+					log.Println("Sending message to channel", channel.Name, "for team", team.SlackTeamId)
 				}
 				notificationsSent++
 			}
-		}
-		if (!foundGeneralChannel) {
-			log.Println("Bot cannot post is the general channel, please invite it")
 		}
 	}
 
