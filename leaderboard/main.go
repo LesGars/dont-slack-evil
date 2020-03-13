@@ -11,32 +11,37 @@ import (
 	"github.com/slack-go/slack"
 )
 
+// UserScore contains the positivity score of a Slack user
+type UserScore struct {
+	ID string
+	Name string
+	Good int
+	Total int
+	Score float64
+}
+
 // SendLeaderboardNotification sends the leaderboard notification
 func SendLeaderboardNotification() (int, error) {
 	notificationsSent := 0
 	teams, teamsErr := dsedb.GetTeams()
+	log.Println("Analyzing weekly messages for", len(teams), "teams")
 	if teamsErr != nil {
 		log.Println(teamsErr)
 		return 0, teamsErr
 	}
 	for _, team := range teams {
+		log.Println("Analyzing weekly messages from team", team.SlackTeamId)
 		// FIXME: remove
-		if (team.SlackTeamId != "TU7KB9FB9") {
-			continue
-		}
+		// if (team.SlackTeamId != "TU7KB9FB9") {
+		// 	continue
+		// }
 		slackBotUserApiClient := slack.New(team.SlackBotUserToken)
 		users, err := slackBotUserApiClient.GetUsers()
 		if err != nil {
 			log.Printf("Could not instantiate bot client for team %v", team.SlackTeamId)
 			continue
 		}
-		type UserScore struct {
-			ID string
-			Name string
-			Good int
-			Total int
-			Score float64
-		}
+		log.Println("Found", len(users), "users in team")
 		var userScores []UserScore;
 		for _, user := range users {
 			// This is the best way I found to distinguish bots from real users
@@ -101,7 +106,8 @@ func SendLeaderboardNotification() (int, error) {
 		}
 		channels, _, channelErr := slackBotUserApiClient.GetConversations(&params)
 		if (channelErr != nil) {
-			return 0, channelErr
+			log.Println(channelErr)
+			continue
 		}
 		for _, channel := range channels {
 			if (channel.IsMember && channel.IsGeneral) {
