@@ -1,11 +1,13 @@
 package leaderboard
 
 import (
+	"fmt"
 	"log"
 	"sort"
 
 	"dont-slack-evil/apphome"
 	dsedb "dont-slack-evil/db"
+
 	"github.com/slack-go/slack"
 )
 
@@ -46,10 +48,13 @@ func SendLeaderboardNotification() (int, error) {
 				userScores = append(userScores, userScore)
 			}
 		}
+		// Sort by positivity scores
 		sort.Slice(userScores, func(i, j int) bool {
 			return userScores[i].Score > userScores[j].Score
 		})
 		log.Println(userScores)
+		top3 := userScores[:3]
+		log.Println(top3)
 	}
 
 	return notificationsSent, nil

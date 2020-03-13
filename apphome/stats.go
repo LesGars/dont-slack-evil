@@ -65,8 +65,10 @@ func GetWeeklyPositivityScore(userID string) float64 {
 	badQualityFilt := badQualityFilt()
 	badMessages := messagesAnalyzed(expression.And(badQualityFilt, userIDFilt))
 	totalMessages := messagesAnalyzed(userIDFilt)
-	positivityScore := 1 - float64(badMessages) / float64(totalMessages)
-	return positivityScore
+	if (totalMessages > 0) {
+		return 1 - float64(badMessages) / float64(totalMessages)
+	}
+	return 0
 }
 
 func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
