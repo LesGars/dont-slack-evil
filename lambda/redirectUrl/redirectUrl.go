@@ -16,25 +16,17 @@ import (
 	"github.com/fatih/structs"
 )
 
-// OauthAccessResponse is the type of the Oauth Access response
-type OauthAccessResponse struct {
-	Ok          bool   `json:"ok"`
-	AppID       string `json:"app_id"`
-	Scope       string `json:"scope"`
-	TokenType   string `json:"token_type"`
-	AccessToken string `json:"access_token"`
-	BotUserID   string `json:"bot_user_id"`
+type OAuthV2Response struct {
+	AccessToken string                    `json:"access_token"`
+	TokenType   string                    `json:"token_type"`
+	Scope       string                    `json:"scope"`
+	BotUserID   string                    `json:"bot_user_id"`
+	AppID       string                    `json:"app_id"`
+	IncomingWebhook dsedb.IncomingWebhook `json:"incoming_webhook"`
 	Team        struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"team"`
-	Enterprise string `json:"enterprise"`
-}
-
-// OauthTokenDBItem is the struct for storing the access token in DB
-type OauthTokenDBItem struct {
-	TeamID      string `json:"team_id"`
-	AccessToken string `json:"access_token"`
 }
 
 // Response is of type APIGatewayProxyResponse
