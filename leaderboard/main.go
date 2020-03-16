@@ -97,25 +97,17 @@ func SendLeaderboardNotification() (int, error) {
 				userScores[2].Total,
 			)
 		}
-		params := slack.GetConversationsParameters {
-			Types: []string{"public_channel"},
+		msg := slack.WebhookMessage {
+			Channel: team.IncomingWebhook.ChannelID,
+			Text: text,
 		}
-		channels, _, channelErr := slackBotUserApiClient.GetConversations(&params)
-		if (channelErr != nil) {
-			log.Println(channelErr)
-			continue
+		webhookError := slack.PostWebhook(team.IncomingWebhook.URL, &msg)
+		if (webhookError != nil) {
+			log.Println(webhookError)
+		} else {
+			log.Println("Sending message to channel", team.IncomingWebhook.Channel, "for team", team.SlackTeamId)
 		}
-		for _, channel := range channels {
-			if (channel.IsGeneral) {
-				_, _, postError := slackBotUserApiClient.PostMessage(channel.ID, slack.MsgOptionText(text, false))
-				if (postError != nil) {
-					log.Println(postError)
-				} else {
-					log.Println("Sending message to channel", channel.Name, "for team", team.SlackTeamId)
-				}
-				notificationsSent++
-			}
-		}
+		notificationsSent++
 	}
 
 	return notificationsSent, nil
