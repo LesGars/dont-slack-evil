@@ -16,7 +16,8 @@ import (
 	"github.com/fatih/structs"
 )
 
-type OAuthV2Response struct {
+// OAuthResponse contains Oauth information exchanged for the access token
+type OAuthResponse struct {
 	AccessToken string                    `json:"access_token"`
 	TokenType   string                    `json:"token_type"`
 	Scope       string                    `json:"scope"`
@@ -62,9 +63,9 @@ func Handler(request Request) (Response, error) {
 	}
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
-	var oauthAccessResponse OauthAccessResponse
-	unMarshallErr := json.Unmarshal(body, &oauthAccessResponse)
-	if unMarshallErr != nil {
+	var oauthResponse OAuthResponse
+	unMarshallErr := json.Unmarshal(body, &oauthResponse)
+	if (unMarshallErr != nil) {
 		log.Println(unMarshallErr)
 		statusCode = 500
 	}
@@ -76,8 +77,9 @@ func Handler(request Request) (Response, error) {
 		log.Println(dbError)
 	}
 	dbItem := dsedb.Team{
-		SlackTeamId:       oauthAccessResponse.Team.ID,
-		SlackBotUserToken: oauthAccessResponse.AccessToken,
+		SlackTeamId:       oauthResponse.Team.ID,
+		SlackBotUserToken: oauthResponse.AccessToken,
+		IncomingWebhook: oauthResponse.IncomingWebhook,
 	}
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
@@ -88,7 +90,7 @@ func Handler(request Request) (Response, error) {
 	}
 
 	// Redirect to slack workspace URL
-	redirectURL := "https://app.slack.com/client/" + oauthAccessResponse.Team.ID
+	redirectURL := "https://app.slack.com/client/" + oauthResponse.Team.ID
 	response := Response{
 		StatusCode: statusCode,
 		Headers: map[string]string{
