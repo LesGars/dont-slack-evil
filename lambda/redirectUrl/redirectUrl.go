@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	dsedb "dont-slack-evil/db"
 
@@ -80,6 +81,7 @@ func Handler(request Request) (Response, error) {
 		SlackTeamId:       oauthResponse.Team.ID,
 		SlackBotUserToken: oauthResponse.AccessToken,
 		IncomingWebhook: oauthResponse.IncomingWebhook,
+		Updated: time.Now(),
 	}
 	dbResult := dsedb.Store(tableName, structs.Map(&dbItem))
 	if !dbResult {
