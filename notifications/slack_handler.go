@@ -7,7 +7,7 @@ import (
 	"github.com/slack-go/slack"
 )
 
-// SendNotification loops through all the users and sends a message to those who sent too many
+// SendNotifications loops through all the users and sends a message to those who sent too many
 // messages of bad quality over the last quarter
 func SendNotifications() (int, error) {
 	notificationsSent := 0

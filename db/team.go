@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -12,10 +13,19 @@ import (
 	"github.com/fatih/structs"
 )
 
+type IncomingWebhook struct {
+	Channel          string `json:"channel"`
+	ChannelID        string `json:"channel_id"`
+	ConfigurationURL string `json:"configuration_url"`
+	URL              string `json:"url"`
+}
+
 type Team struct {
-	SlackTeamId            string `json:"slack_team_id"`
-	SlackBotUserToken      string `json:"slack_bot_user_oauth_token"`
-	SlackRegularOauthToken string `json:"slack_regular_oauth_token"`
+	SlackTeamId            string           `json:"slack_team_id"`
+	SlackBotUserToken      string           `json:"slack_bot_user_oauth_token"`
+	SlackRegularOauthToken string           `json:"slack_regular_oauth_token"`
+	IncomingWebhook        IncomingWebhook  `json:"incoming_webhook"`
+	Updated                time.Time        `json:"updated"`
 }
 
 func FindOrCreateTeamById(id string) (*Team, error) {

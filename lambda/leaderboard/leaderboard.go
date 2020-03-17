@@ -1,10 +1,13 @@
-package notifications
+package main
 
 import (
 	"context"
 	"log"
 
+	"dont-slack-evil/leaderboard"
+
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
 // Response is of type APIGatewayProxyResponse since we're leveraging the
@@ -13,9 +16,9 @@ import (
 // https://serverless.com/framework/docs/providers/aws/events/apigateway/#lambda-proxy-integration
 type Response events.APIGatewayProxyResponse
 
-// LambdaHandler is our lambda handler invoked by the `lambda.Start` function call
-func LambdaHandler(ctx context.Context) (Response, error) {
-	_, err := SendNotifications()
+// LambdaHandlerLeaderboard handles leaderboard notifications
+func LambdaHandlerLeaderboard(ctx context.Context) (Response, error) {
+	_, err := leaderboard.SendLeaderboardNotification()
 	if err != nil {
 		log.Println(err)
 	  return Response{StatusCode: 500}, err
@@ -28,4 +31,8 @@ func LambdaHandler(ctx context.Context) (Response, error) {
 			"Content-Type":           "text",
 		},
 	}, nil
+}
+
+func main() {
+	lambda.Start(LambdaHandlerLeaderboard)
 }

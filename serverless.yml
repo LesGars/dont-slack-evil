@@ -66,12 +66,13 @@ functions:
       - http:
           path: notifications
           method: get
-  dynamodbExample:
-    handler: bin/dynamodb-example
+  leaderboard:
+    handler: bin/leaderboard
     events:
       - http:
-          path: dynamodb-example
+          path: leaderboard
           method: get
+      - schedule: rate(1 day)
   redirectUrl:
     handler: bin/redirectUrl
     events:
