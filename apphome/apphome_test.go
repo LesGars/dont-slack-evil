@@ -18,7 +18,7 @@ func TestHomeBasicSections(t *testing.T) {
 
 		Here are the standings for this quarter:
 		:first_place_medal: <@44> with a 0.00%% score (0 / 0)
-		:second_place_medal: <@42> with a 0.00%% score (0 / 0)
+		:second_place_medal: <@22> with a 0.00%% score (0 / 0)
 		:third_place_medal: <@666> with a 0.00%% score (0 / 0)
 		:face_with_monocle: You with a 0.00%% score (0 / 0)`,
 	), "\n", `\n`, -1)
