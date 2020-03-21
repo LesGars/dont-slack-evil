@@ -11,7 +11,21 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/fatih/structs"
+	"github.com/slack-go/slack"
 )
+
+type ApiForTeam struct {
+	Team                  Team
+	SlackBotUserApiClient SlackApiInterface
+}
+
+type SlackApiInterface interface {
+	// This interface is meant to make a *slack.Client mockable easily
+	PostMessage(channelID string, options ...slack.MsgOption) (string, string, error)
+	PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error)
+	GetUserInfo(user string) (*slack.User, error)
+	GetUsers() ([]slack.User, error)
+}
 
 type IncomingWebhook struct {
 	Channel          string `json:"channel"`
@@ -21,11 +35,11 @@ type IncomingWebhook struct {
 }
 
 type Team struct {
-	SlackTeamId            string           `json:"slack_team_id"`
-	SlackBotUserToken      string           `json:"slack_bot_user_oauth_token"`
-	SlackRegularOauthToken string           `json:"slack_regular_oauth_token"`
-	IncomingWebhook        IncomingWebhook  `json:"incoming_webhook"`
-	Updated                time.Time        `json:"updated"`
+	SlackTeamId            string          `json:"slack_team_id"`
+	SlackBotUserToken      string          `json:"slack_bot_user_oauth_token"`
+	SlackRegularOauthToken string          `json:"slack_regular_oauth_token"`
+	IncomingWebhook        IncomingWebhook `json:"incoming_webhook"`
+	Updated                time.Time       `json:"updated"`
 }
 
 func FindOrCreateTeamById(id string) (*Team, error) {

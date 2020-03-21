@@ -2,6 +2,7 @@ package messages
 
 import (
 	"dont-slack-evil/db"
+	dsedb "dont-slack-evil/db"
 	"encoding/json"
 	"errors"
 	"testing"
@@ -60,8 +61,8 @@ func TestSlackHandler_URLVerificationSuccess(t *testing.T) {
 	}
 }
 
-func mockWorkingApiForTeam(slackevents.EventsAPIEvent) (*ApiForTeam, error) {
-	return &ApiForTeam{
+func mockWorkingApiForTeam(slackevents.EventsAPIEvent) (*dsedb.ApiForTeam, error) {
+	return &dsedb.ApiForTeam{
 		Team:                  db.Team{SlackTeamId: "42", SlackBotUserToken: "xoxb-42"},
 		SlackBotUserApiClient: WorkingDummySlackClient{},
 	}, nil
@@ -77,6 +78,9 @@ func (ds WorkingDummySlackClient) PublishView(userID string, view slack.HomeTabV
 }
 func (ds WorkingDummySlackClient) GetUserInfo(user string) (*slack.User, error) {
 	return &slack.User{Name: "Le gars"}, nil
+}
+func (ds WorkingDummySlackClient) GetUsers() ([]slack.User, error) {
+	return []slack.User{slack.User{Name: "Le gars", ID: "42"}}, nil
 }
 
 // If parseEvent returns an event of type AppMentionEvent and the POST message succeeds, the handler should return nil and nil

@@ -1,4 +1,4 @@
-package apphome
+package stats
 
 import (
 	"testing"

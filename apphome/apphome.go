@@ -1,27 +1,30 @@
 package apphome
 
 import (
+	dsedb "dont-slack-evil/db"
+	"dont-slack-evil/leaderboard"
+	"dont-slack-evil/stats"
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/slack-go/slack"
 )
 
-func UserHome(userId string, userName string) slack.Message {
+// Wraps the HomeSections with the top level slack payload
+func UserHome(userId string, userName string, apiForTeam dsedb.ApiForTeam) slack.Message {
 	message := slack.NewBlockMessage(
-		append(
-			HomeBasicSections(userName, userId),
-		)...,
+		HomeSections(userName, userId, apiForTeam)...,
 	)
 	message.Msg.Type = "home"
 
 	return message
 }
 
-func HomeBasicSections(userName string, userId string) []slack.Block {
+// Note this function
+func HomeSections(userName string, userId string, apiForTeam dsedb.ApiForTeam) []slack.Block {
 	return append(
 		introSections(userName),
-		statsSections(userId)...,
+		statsSections(userId, apiForTeam)...,
 	)
 }
 
@@ -37,8 +40,8 @@ func introSections(userName string) []slack.Block {
 	return []slack.Block{headerSection, helloSection, slack.NewDividerBlock()}
 }
 
-func statsSections(userId string) []slack.Block {
-	stats := HomeStatsForUser(userId)
+func statsSections(userId string, apiForTeam dsedb.ApiForTeam) []slack.Block {
+	stats := stats.HomeStatsForUser(userId)
 	messageStats := slack.NewTextBlockObject("mrkdwn",
 		heredoc.Doc(fmt.Sprintf(`
 			*All time*
@@ -60,17 +63,52 @@ func statsSections(userId string) []slack.Block {
 		false, false,
 	)
 
-	weeklyLeaderboardText := heredoc.Doc(fmt.Sprintf(`
-		*Weekly positivity rankings:*
+	leaderboards, err := leaderBoardsWithCurrentUser(apiForTeam, userId)
+	var fields []*slack.TextBlockObject
+	if err != nil {
+		fields = []*slack.TextBlockObject{messageStats}
+	} else {
+		fields = []*slack.TextBlockObject{messageStats, leaderboards}
+	}
 
-		Here are the standings for this quarter:
-		:first_place_medal: <@UU7KH0J0P> with a %1.f%% score
-		:second_place_medal: <@UTU9SCT6X> with a %1.f%% score
-		:third_place_medal: <@UTT0779FC> with a %1.f%% score`,
-		0.391304347826087*100, 0.375*100, 0.356789*100))
-	weeklyLeaderboard := slack.NewTextBlockObject("mrkdwn", weeklyLeaderboardText, false, false)
-
-	fields := []*slack.TextBlockObject{messageStats, weeklyLeaderboard}
 	statsSection := slack.NewSectionBlock(nil, fields, nil)
 	return []slack.Block{statsSection, slack.NewDividerBlock()}
+}
+
+func leaderBoardsWithCurrentUser(apiForTeam dsedb.ApiForTeam, userId string) (*slack.TextBlockObject, error) {
+	scores, leaderboardErr := leaderboard.LeaderboardsForTeam(apiForTeam.SlackBotUserApiClient)
+	if leaderboardErr != nil {
+		return nil, leaderboardErr
+	}
+	var isFirstPlace, isSecondPlace, isThirdPlace, isNthPlace string
+	for i, _ := range scores {
+		if scores[i].ID == userId {
+			if i == 0 {
+				isFirstPlace = "(you) "
+			} else if i == 1 {
+				isSecondPlace = "(you) "
+			} else if i == 2 {
+				isThirdPlace = "(you) "
+			} else {
+				isNthPlace = fmt.Sprintf("\nYou with a %.2f score (%d / %d)",
+					scores[i].Score*100, scores[i].Good, scores[i].Total,
+				)
+			}
+			break
+		}
+	}
+	weeklyLeaderboardText := heredoc.Doc(fmt.Sprintf(`
+	*Weekly positivity rankings:*
+
+	Here are the standings for this quarter:
+	:first_place_medal: %s<@%s> with a %.2f score (%d / %d)
+	:second_place_medal: %s <@%s> with a %.2f score (%d / %d)
+	:third_place_medal: %s <@%s> with a %.2f score (%d / %d)%s`,
+		scores[0].ID, isFirstPlace, scores[0].Score*100, scores[0].Good, scores[0].Total,
+		scores[1].ID, isSecondPlace, scores[1].Score*100, scores[1].Good, scores[1].Total,
+		scores[2].ID, isThirdPlace, scores[2].Score*100, scores[2].Good, scores[2].Total,
+		isNthPlace,
+	))
+
+	return slack.NewTextBlockObject("mrkdwn", weeklyLeaderboardText, false, false), nil
 }

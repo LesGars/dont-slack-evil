@@ -37,7 +37,7 @@ var publishView = slackBotUserApiClient.PublishView
 
 var userHome = apphome.UserHome
 
-func analyzeMessage(message *slackevents.MessageEvent, apiForTeam ApiForTeam) (string, error) {
+func analyzeMessage(message *slackevents.MessageEvent, apiForTeam dsedb.ApiForTeam) (string, error) {
 	log.Printf("Reacting to message event from channel %s", message.Channel)
 	storeMsgError := storeMessage(message, apiForTeam)
 	if storeMsgError != nil {
@@ -55,7 +55,7 @@ func analyzeMessage(message *slackevents.MessageEvent, apiForTeam ApiForTeam) (s
 	return "", nil
 }
 
-func yesHello(message *slackevents.AppMentionEvent, apiForTeam ApiForTeam) (string, error) {
+func yesHello(message *slackevents.AppMentionEvent, apiForTeam dsedb.ApiForTeam) (string, error) {
 	log.Printf("Reacting to app mention event from channel %s", message.Channel)
 	_, _, postError := apiForTeam.SlackBotUserApiClient.PostMessage(message.Channel, slack.MsgOptionText("Yes, hello.", false))
 	if postError != nil {
@@ -66,7 +66,7 @@ func yesHello(message *slackevents.AppMentionEvent, apiForTeam ApiForTeam) (stri
 	return "", nil
 }
 
-func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (string, error) {
+func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam dsedb.ApiForTeam) (string, error) {
 	log.Println("Reacting to app home request event")
 	userID := ev.User
 	var userName string
@@ -80,7 +80,7 @@ func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (s
 
 	homeViewForUser := slack.HomeTabViewRequest{
 		Type:   "home",
-		Blocks: userHome(userID, userName).Blocks,
+		Blocks: userHome(userID, userName, apiForTeam).Blocks,
 	}
 	homeViewAsJson, _ := json.Marshal(homeViewForUser)
 	log.Printf("Sending view %s", homeViewAsJson)
@@ -93,7 +93,7 @@ func updateAppHome(ev *slackevents.AppHomeOpenedEvent, apiForTeam ApiForTeam) (s
 	return "", nil
 }
 
-var storeMessage = func(message *slackevents.MessageEvent, apiForTeam ApiForTeam) error {
+var storeMessage = func(message *slackevents.MessageEvent, apiForTeam dsedb.ApiForTeam) error {
 	// Create DB
 	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"
 	dbError := dsedb.CreateTableIfNotCreated(tableName, "slack_message_id")

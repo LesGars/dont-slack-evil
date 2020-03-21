@@ -1,4 +1,4 @@
-package apphome
+package stats
 
 import (
 	dsedb "dont-slack-evil/db"

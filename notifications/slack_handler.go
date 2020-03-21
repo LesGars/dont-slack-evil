@@ -1,9 +1,10 @@
 package notifications
 
 import (
-	"dont-slack-evil/apphome"
-	"log"
 	dsedb "dont-slack-evil/db"
+	"dont-slack-evil/stats"
+	"log"
+
 	"github.com/slack-go/slack"
 )
 
@@ -25,7 +26,7 @@ func SendNotifications() (int, error) {
 		}
 		for _, user := range users {
 			userId := user.ID
-			tooManyBadQualityMessagesLastQuarter := apphome.HasTooManyBadQualityMessagesLastQuarter(userId)
+			tooManyBadQualityMessagesLastQuarter := stats.HasTooManyBadQualityMessagesLastQuarter(userId)
 			if tooManyBadQualityMessagesLastQuarter {
 				conversationParameters := slack.OpenConversationParameters{
 					Users: []string{userId},
