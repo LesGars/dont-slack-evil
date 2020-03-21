@@ -32,8 +32,9 @@ func (ds WorkingDummySlackClient) GetUserInfo(user string) (*slack.User, error) 
 }
 func (ds WorkingDummySlackClient) GetUsers() ([]slack.User, error) {
 	return []slack.User{
-		slack.User{Name: "Le gars", ID: "42"},
 		slack.User{Name: "La meuf", ID: "44"},
 		slack.User{Name: "L'autre'", ID: "22"},
+		slack.User{Name: "Le triso'", ID: "666"},
+		slack.User{Name: "Le gars", ID: "42"},
 	}, nil
 }

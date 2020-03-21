@@ -94,7 +94,7 @@ func leaderBoardsWithCurrentUser(apiForTeam dsedb.ApiForTeam, userId string) (*s
 			} else if i == 2 {
 				isThirdPlace = " (you)"
 			} else {
-				isNthPlace = fmt.Sprintf("\nYou with a %.2f score (%d / %d)",
+				isNthPlace = fmt.Sprintf(":face_with_monocle: You with a %.2f%% score (%d / %d)",
 					scores[i].Score*100, scores[i].Good, scores[i].Total,
 				)
 			}
@@ -102,12 +102,13 @@ func leaderBoardsWithCurrentUser(apiForTeam dsedb.ApiForTeam, userId string) (*s
 		}
 	}
 	weeklyLeaderboardText := heredoc.Doc(fmt.Sprintf(`
-	*Weekly positivity rankings:*
+		*Weekly positivity rankings:*
 
-	Here are the standings for this quarter:
-	:first_place_medal: <@%s>%s with a %.2f%% score (%d / %d)
-	:second_place_medal: <@%s>%s with a %.2f%% score (%d / %d)
-	:third_place_medal: <@%s>%s with a %.2f%% score (%d / %d)%s`,
+		Here are the standings for this quarter:
+		:first_place_medal: <@%s>%s with a %.2f%% score (%d / %d)
+		:second_place_medal: <@%s>%s with a %.2f%% score (%d / %d)
+		:third_place_medal: <@%s>%s with a %.2f%% score (%d / %d)
+		%s`, // would be painful to make this one conditional, it's ok to have a blank line with spaces
 		scores[0].ID, isFirstPlace, scores[0].Score*100, scores[0].Good, scores[0].Total,
 		scores[1].ID, isSecondPlace, scores[1].Score*100, scores[1].Good, scores[1].Total,
 		scores[2].ID, isThirdPlace, scores[2].Score*100, scores[2].Good, scores[2].Total,
