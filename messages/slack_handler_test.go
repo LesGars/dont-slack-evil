@@ -1,13 +1,11 @@
 package messages
 
 import (
-	"dont-slack-evil/db"
-	dsedb "dont-slack-evil/db"
+	"dont-slack-evil/test"
 	"encoding/json"
 	"errors"
 	"testing"
 
-	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 )
 
@@ -61,33 +59,11 @@ func TestSlackHandler_URLVerificationSuccess(t *testing.T) {
 	}
 }
 
-func mockWorkingApiForTeam(slackevents.EventsAPIEvent) (*dsedb.ApiForTeam, error) {
-	return &dsedb.ApiForTeam{
-		Team:                  db.Team{SlackTeamId: "42", SlackBotUserToken: "xoxb-42"},
-		SlackBotUserApiClient: WorkingDummySlackClient{},
-	}, nil
-}
-
-type WorkingDummySlackClient struct{}
-
-func (ds WorkingDummySlackClient) PostMessage(channelID string, options ...slack.MsgOption) (string, string, error) {
-	return "", "", nil
-}
-func (ds WorkingDummySlackClient) PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error) {
-	return &slack.ViewResponse{}, nil
-}
-func (ds WorkingDummySlackClient) GetUserInfo(user string) (*slack.User, error) {
-	return &slack.User{Name: "Le gars"}, nil
-}
-func (ds WorkingDummySlackClient) GetUsers() ([]slack.User, error) {
-	return []slack.User{slack.User{Name: "Le gars", ID: "42"}}, nil
-}
-
 // If parseEvent returns an event of type AppMentionEvent and the POST message succeeds, the handler should return nil and nil
 func TestHandleSlackEvent_AppMentionEventSuccess(t *testing.T) {
 	oldBuildApiForTeam := buildApiForTeam
 	defer func() { buildApiForTeam = oldBuildApiForTeam }()
-	buildApiForTeam = mockWorkingApiForTeam
+	buildApiForTeam = test.MockWorkingApiForTeam
 
 	oldparseEvent := parseEvent
 	defer func() { parseEvent = oldparseEvent }()

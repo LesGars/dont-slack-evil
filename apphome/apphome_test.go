@@ -1,7 +1,7 @@
 package apphome
 
 import (
-	"dont-slack-evil/db"
+	"dont-slack-evil/test"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -17,9 +17,9 @@ func TestHomeBasicSections(t *testing.T) {
 		*Weekly positivity rankings:*
 
 		Here are the standings for this quarter:
-		:first_place_medal: <@UU7KH0J0P> with a 39%% score
-		:second_place_medal: <@UTU9SCT6X> with a 38%% score
-		:third_place_medal: <@UTT0779FC> with a 36%% score`,
+		:first_place_medal: <@42> (you) with a 0.00%% score (0 / 0)
+		:second_place_medal: <@44> with a 0.00%% score (0 / 0)
+		:third_place_medal: <@22> with a 0.00%% score (0 / 0)`,
 	), "\n", `\n`, -1)
 	expectedScores := strings.Replace(heredoc.Docf(`
 		*All time*
@@ -94,7 +94,7 @@ func TestHomeBasicSections(t *testing.T) {
 		fmt.Println("error:", err)
 	}
 
-	actual := slack.NewBlockMessage(HomeSections("Cyril", "42", db.ApiForTeam{})...)
+	actual := slack.NewBlockMessage(HomeSections("Cyril", "42", test.WorkingApiForTeam())...)
 	actual.Msg.Type = "home"
 
 	if diff := deep.Equal(expectedObject, actual); diff != nil {
