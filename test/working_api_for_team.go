@@ -38,3 +38,6 @@ func (ds WorkingDummySlackClient) GetUsers() ([]slack.User, error) {
 		slack.User{Name: "Le gars", ID: "42"},
 	}, nil
 }
+func (ds WorkingDummySlackClient) PostEphemeral(channelID string, userID string, options ...slack.MsgOption) (string, error) {
+	return "424242.424242", nil
+}

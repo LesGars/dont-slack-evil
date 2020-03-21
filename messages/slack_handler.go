@@ -67,7 +67,7 @@ func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent, apiForTeam dsed
 	log.Printf("Processing an event of inner data %s", innerEvent.Data)
 	switch ev := innerEvent.Data.(type) {
 	case *slackevents.MessageEvent:
-		return analyzeMessage(ev, apiForTeam)
+		return analyzeMessageAndWarnIfTooNegative(ev, apiForTeam)
 	case *slackevents.AppMentionEvent:
 		return yesHello(ev, apiForTeam)
 	case *slackevents.AppHomeOpenedEvent:
