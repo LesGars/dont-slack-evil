@@ -43,21 +43,34 @@ func statsSections(userId string) []slack.Block {
 		heredoc.Doc(fmt.Sprintf(`
 			*All time*
 			Number of analyzed messages: %d
-			Number of messages of bad quality : %d
-			%% of messages of bad quality : %d%%
+			Number of messages of good quality : %d
+
+			Your overall positivity : %d%%
+
 			*Current Quarter*
 			(ends in %d days)
 			Number of analyzed messages: %d
-			Number of messages of bad quality : %d
-			%% of messages of bad quality : %d%%`,
-			stats.MessagesAnalyzedAllTime, stats.MessagesOfBadQualityAllTime, int(stats.PercentageOfMessagesOfBadQualityAllTime*100),
+			Number of messages of good quality : %d
+
+			Your positivity this quarter : %d%%`,
+			stats.MessagesAnalyzedAllTime, stats.MessagesOfGoodQualityAllTime, int(stats.PercentageOfMessagesOfGoodQualityAllTime*100),
 			42,
-			stats.MessagesAnalyzedSinceQuarter, stats.MessagesOfBadQualitySinceQuarter, int(stats.PercentageOfMessagesOfBadQualitySinceQuarter*100),
+			stats.MessagesAnalyzedSinceQuarter, stats.MessagesOfGoodQualitySinceQuarter, int(stats.PercentageOfMessagesOfGoodQualitySinceQuarter*100),
 		)),
 		false, false,
 	)
 
-	fields := []*slack.TextBlockObject{messageStats}
+	weeklyLeaderboardText := heredoc.Doc(fmt.Sprintf(`
+		*Weekly positivity rankings:*
+
+		Here are the standings for this quarter:
+		:first_place_medal: <@UU7KH0J0P> with a %1.f%% score
+		:second_place_medal: <@UTU9SCT6X> with a %1.f%% score
+		:third_place_medal: <@UTT0779FC> with a %1.f%% score`,
+		0.391304347826087*100, 0.375*100, 0.356789*100))
+	weeklyLeaderboard := slack.NewTextBlockObject("mrkdwn", weeklyLeaderboardText, false, false)
+
+	fields := []*slack.TextBlockObject{messageStats, weeklyLeaderboard}
 	statsSection := slack.NewSectionBlock(nil, fields, nil)
 	return []slack.Block{statsSection, slack.NewDividerBlock()}
 }

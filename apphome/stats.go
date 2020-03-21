@@ -12,35 +12,35 @@ import (
 	"github.com/jinzhu/now"
 )
 
-var thresholdQuality float64 = 0.2
+var thresholdQuality float64 = 0.33 // Means negative over 33% --> bad quality
 var thresholdAlert float64 = 50.0
 
 type DSEHomeStats struct {
-	MessagesAnalyzedAllTime                 int     `json:"messagesAnalyzedAllTime"`
-	MessagesOfBadQualityAllTime             int     `json:"messagesOfBadQualityAllTime"`
-	PercentageOfMessagesOfBadQualityAllTime float64 `json:"percentageOfMessagesOfBadQualityAllTime"`
+	MessagesAnalyzedAllTime                  int     `json:"messagesAnalyzedAllTime"`
+	MessagesOfGoodQualityAllTime             int     `json:"messagesOfBadQualityAllTime"`
+	PercentageOfMessagesOfGoodQualityAllTime float64 `json:"percentageOfMessagesOfBadQualityAllTime"`
 
-	MessagesAnalyzedSinceQuarter                 int     `json:"messagesAnalyzedLastQuarter"`
-	MessagesOfBadQualitySinceQuarter             int     `json:"messagesOfBadQualityLastQuarter"`
-	PercentageOfMessagesOfBadQualitySinceQuarter float64 `json:"percentageOfMessagesOfBadQualityLastQuarter"`
+	MessagesAnalyzedSinceQuarter                  int     `json:"messagesAnalyzedLastQuarter"`
+	MessagesOfGoodQualitySinceQuarter             int     `json:"messagesOfBadQualityLastQuarter"`
+	PercentageOfMessagesOfGoodQualitySinceQuarter float64 `json:"percentageOfMessagesOfBadQualityLastQuarter"`
 }
 
 func HomeStatsForUser(userId string) DSEHomeStats {
 	userIdFilt := userIdFilt(userId)
-	badQualityFilt := badQualityFilt()
+	goodQlFilt := goodQualityFilt()
 	sinceBeginningOfQuarterFilt := sinceBeginningOfQuarterFilt()
 	stats := DSEHomeStats{
-		MessagesAnalyzedAllTime:     messagesAnalyzed(userIdFilt),
-		MessagesOfBadQualityAllTime: messagesAnalyzed(expression.And(badQualityFilt, userIdFilt)),
+		MessagesAnalyzedAllTime:      messagesAnalyzed(userIdFilt),
+		MessagesOfGoodQualityAllTime: messagesAnalyzed(expression.And(goodQlFilt, userIdFilt)),
 
-		MessagesAnalyzedSinceQuarter:     messagesAnalyzed(expression.And(userIdFilt, sinceBeginningOfQuarterFilt)),
-		MessagesOfBadQualitySinceQuarter: messagesAnalyzed(expression.And(badQualityFilt, userIdFilt, sinceBeginningOfQuarterFilt)),
+		MessagesAnalyzedSinceQuarter:      messagesAnalyzed(expression.And(userIdFilt, sinceBeginningOfQuarterFilt)),
+		MessagesOfGoodQualitySinceQuarter: messagesAnalyzed(expression.And(goodQlFilt, userIdFilt, sinceBeginningOfQuarterFilt)),
 	}
 	if stats.MessagesAnalyzedAllTime != 0 {
-		stats.PercentageOfMessagesOfBadQualityAllTime = float64(stats.MessagesOfBadQualityAllTime) / float64(stats.MessagesAnalyzedAllTime)
+		stats.PercentageOfMessagesOfGoodQualityAllTime = float64(stats.MessagesOfGoodQualityAllTime) / float64(stats.MessagesAnalyzedAllTime)
 	}
 	if stats.MessagesAnalyzedSinceQuarter != 0 {
-		stats.PercentageOfMessagesOfBadQualitySinceQuarter = float64(stats.MessagesOfBadQualitySinceQuarter) / float64(stats.MessagesAnalyzedSinceQuarter)
+		stats.PercentageOfMessagesOfGoodQualitySinceQuarter = float64(stats.MessagesOfGoodQualitySinceQuarter) / float64(stats.MessagesAnalyzedSinceQuarter)
 	}
 	return stats
 }
@@ -49,8 +49,8 @@ func userIdFilt(userId string) expression.ConditionBuilder {
 	return expression.Equal(expression.Name("user_id"), expression.Value(userId))
 }
 
-func badQualityFilt() expression.ConditionBuilder {
-	return expression.GreaterThan(expression.Name("sentiment.negative"), expression.Value(thresholdQuality))
+func goodQualityFilt() expression.ConditionBuilder {
+	return expression.LessThan(expression.Name("sentiment.negative"), expression.Value(thresholdQuality))
 }
 
 func fromLastWeekFilt() expression.ConditionBuilder {
@@ -68,9 +68,9 @@ func sinceBeginningOfQuarterFilt() expression.ConditionBuilder {
 // GetWeeklyStats gets the weekly positivity score of a user
 func GetWeeklyStats(userID string) (int, int) {
 	userIDFilt := userIdFilt(userID)
-	badQualityFilt := badQualityFilt()
+	goodQualityFilt := goodQualityFilt()
 	lastWeekFilt := fromLastWeekFilt()
-	badMessages := messagesAnalyzed(expression.And(badQualityFilt, userIDFilt, lastWeekFilt))
+	badMessages := messagesAnalyzed(expression.And(goodQualityFilt, userIDFilt, lastWeekFilt))
 	totalMessages := messagesAnalyzed(expression.And(userIDFilt, lastWeekFilt))
 	goodMessages := totalMessages - badMessages
 	return goodMessages, totalMessages
@@ -104,5 +104,5 @@ func messagesAnalyzed(userIdFilt expression.ConditionBuilder) int {
 // TODO replace the stat by PercentageOfMessagesOfBadQualityLastQuarter
 func HasTooManyBadQualityMessagesLastQuarter(userId string) bool {
 	userStats := HomeStatsForUser(userId)
-	return (userStats.PercentageOfMessagesOfBadQualitySinceQuarter)*100 >= thresholdAlert
+	return (userStats.PercentageOfMessagesOfGoodQualitySinceQuarter)*100 <= thresholdAlert
 }
