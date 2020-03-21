@@ -21,7 +21,7 @@ func UserHome(userId string, userName string, apiForTeam dsedb.ApiForTeam) slack
 	return message
 }
 
-// Note this function
+// This unwrapped function is much easier to unit test
 func HomeSections(userName string, userId string, apiForTeam dsedb.ApiForTeam) []slack.Block {
 	return append(
 		introSections(userName),
