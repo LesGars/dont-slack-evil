@@ -2,7 +2,6 @@ package messages
 
 import (
 	"bytes"
-	"dont-slack-evil/db"
 	dsedb "dont-slack-evil/db"
 	"encoding/json"
 	"errors"
@@ -14,18 +13,6 @@ import (
 )
 
 var slackVerificationToken = os.Getenv("SLACK_VERIFICATION_TOKEN")
-
-type ApiForTeam struct {
-	Team                  db.Team
-	SlackBotUserApiClient SlackApiInterface
-}
-
-type SlackApiInterface interface {
-	// This interface is meant to make a *slack.Client mockable easily
-	PostMessage(channelID string, options ...slack.MsgOption) (string, string, error)
-	PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error)
-	GetUserInfo(user string) (*slack.User, error)
-}
 
 // SlackHandler uses Slack's Event API to respond to an event emitted by our application
 func SlackHandler(body []byte) (string, error) {
@@ -73,7 +60,7 @@ func handleSlackChallenge(eventsAPIEvent slackevents.EventsAPIEvent, body []byte
 	return buf.String(), err
 }
 
-func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent, apiForTeam ApiForTeam) (string, error) {
+func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent, apiForTeam dsedb.ApiForTeam) (string, error) {
 	innerEvent := eventsAPIEvent.InnerEvent
 
 	// Process the event using team data
@@ -89,7 +76,7 @@ func handleSlackEvent(eventsAPIEvent slackevents.EventsAPIEvent, apiForTeam ApiF
 	return "", nil
 }
 
-var buildApiForTeam = func(eventsAPIEvent slackevents.EventsAPIEvent) (*ApiForTeam, error) {
+var buildApiForTeam = func(eventsAPIEvent slackevents.EventsAPIEvent) (*dsedb.ApiForTeam, error) {
 	// Retrieve team data (token, etc)
 	team, teamErr := dsedb.FindOrCreateTeamById(eventsAPIEvent.TeamID)
 	if teamErr != nil {
@@ -97,5 +84,5 @@ var buildApiForTeam = func(eventsAPIEvent slackevents.EventsAPIEvent) (*ApiForTe
 		return nil, teamErr
 	}
 	slackBotUserApiClient := slack.New(team.SlackBotUserToken)
-	return &ApiForTeam{Team: *team, SlackBotUserApiClient: slackBotUserApiClient}, nil
+	return &dsedb.ApiForTeam{Team: *team, SlackBotUserApiClient: slackBotUserApiClient}, nil
 }
