@@ -152,22 +152,34 @@ var getSentiment = func(message *slackevents.MessageEvent) (*dsedb.Sentiment, er
 }
 
 var warnIfTooNegative = func(message *slackevents.MessageEvent, apiForTeam dsedb.ApiForTeam, sentiment dsedb.Sentiment) error {
+	log.Printf("Warning of a bad message, detected negativity is %f", sentiment.Negative)
 	if sentiment.Negative >= warnIfTooBadThreshold {
 		messageVisibleOnlyByUser := heredoc.Docf(`
-			:warning: Be careful ! Your message is %.2f% negative
+			:warning: Be careful ! Your message is %.0f%% negative
 
 			:sunny: Try to stay positive to boost productivity and friendliness in the workspace
 
-			:slack: Come talk to me to find out more!`, sentiment.Negative,
+			:slack: Come talk to me to find out more!`, sentiment.Negative*100,
 		)
 
+		// This is annoying : an Ephemeral message is NOT notified to the user
+		// So if it is the first message sent under a thread, the user would never see it
+		// (Although is is visible when clicking the "start a thread" button in Slack)
+		// Therefore, only send the message in a thread if it is not the first message to be threaded
+		ephemeralMsgOptions := []slack.MsgOption{
+			slack.MsgOptionText(messageVisibleOnlyByUser, false),
+		}
+		if message.ThreadTimeStamp != "" {
+			ephemeralMsgOptions = append(ephemeralMsgOptions, slack.MsgOptionTS(message.ThreadTimeStamp))
+		}
 		_, postError := apiForTeam.SlackBotUserApiClient.PostEphemeral(
 			message.Channel,
 			message.User,
-			slack.MsgOptionText(messageVisibleOnlyByUser, false),
+			ephemeralMsgOptions...,
 		)
+		log.Println("The message is too negative, sending a warning to the user")
 		if postError != nil {
-			message := fmt.Sprintf("Error while posting message %s", postError)
+			message := fmt.Sprintf("Error while posting ephemeral message %s", postError)
 			return errors.New(message)
 		}
 	}
