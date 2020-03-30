@@ -72,7 +72,7 @@ functions:
       - http:
           path: leaderboard
           method: get
-      - schedule: rate(1 day)
+      - schedule: rate(1 week)
   redirectUrl:
     handler: bin/redirectUrl
     events:
