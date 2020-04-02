@@ -21,10 +21,11 @@ type ApiForTeam struct {
 
 type SlackApiInterface interface {
 	// This interface is meant to make a *slack.Client mockable easily
+	GetUsers() ([]slack.User, error)
+	GetUserInfo(user string) (*slack.User, error)
+	PostEphemeral(channelID, userID string, options ...slack.MsgOption) (string, error)
 	PostMessage(channelID string, options ...slack.MsgOption) (string, string, error)
 	PublishView(userID string, view slack.HomeTabViewRequest, hash string) (*slack.ViewResponse, error)
-	GetUserInfo(user string) (*slack.User, error)
-	GetUsers() ([]slack.User, error)
 }
 
 type IncomingWebhook struct {

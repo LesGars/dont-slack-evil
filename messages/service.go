@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/MakeNowJust/heredoc"
 	"github.com/pkg/errors"
 
 	"dont-slack-evil/apphome"
@@ -37,22 +38,33 @@ var publishView = slackBotUserApiClient.PublishView
 
 var userHome = apphome.UserHome
 
-func analyzeMessage(message *slackevents.MessageEvent, apiForTeam dsedb.ApiForTeam) (string, error) {
+var warnIfTooBadThreshold float64 = 0.33 // If above this value, send a message to the user
+
+func analyzeMessageAndWarnIfTooNegative(message *slackevents.MessageEvent, apiForTeam dsedb.ApiForTeam) (string, error) {
+	sentiment, err := analyzeMessage(message, apiForTeam)
+	if err != nil {
+		return "", err
+	}
+
+	return "", warnIfTooNegative(message, apiForTeam, *sentiment)
+}
+
+func analyzeMessage(message *slackevents.MessageEvent, apiForTeam dsedb.ApiForTeam) (*dsedb.Sentiment, error) {
 	log.Printf("Reacting to message event from channel %s", message.Channel)
 	storeMsgError := storeMessage(message, apiForTeam)
 	if storeMsgError != nil {
 		if !strings.Contains(storeMsgError.Error(), "Database could not be created") {
-			return "", storeMsgError
+			return nil, storeMsgError
 		}
 		log.Printf("Could not save initial message %s", storeMsgError)
 	}
 
-	getSentimentError := getSentiment(message)
+	sentiment, getSentimentError := getSentiment(message)
 	if getSentimentError != nil {
-		return "", getSentimentError
+		return nil, getSentimentError
 	}
 
-	return "", nil
+	return sentiment, nil
 }
 
 func yesHello(message *slackevents.AppMentionEvent, apiForTeam dsedb.ApiForTeam) (string, error) {
@@ -119,7 +131,7 @@ var storeMessage = func(message *slackevents.MessageEvent, apiForTeam dsedb.ApiF
 	return nil
 }
 
-var getSentiment = func(message *slackevents.MessageEvent) error {
+var getSentiment = func(message *slackevents.MessageEvent) (*dsedb.Sentiment, error) {
 	tableName := os.Getenv("DYNAMODB_TABLE_PREFIX") + "messages"
 	apiKey := os.Getenv("PD_API_KEY")
 	apiURL := os.Getenv("PD_API_URL")
@@ -128,13 +140,48 @@ var getSentiment = func(message *slackevents.MessageEvent) error {
 	if sentimentError != nil {
 		errorMsg := "Could not analyze message"
 		log.Println(errorMsg)
-		return errors.New(errorMsg)
+		return nil, errors.New(errorMsg)
 	}
 	dbResult := dsedb.Update(tableName, message.EventTimeStamp.String(), sentimentAnalysis.Sentiment)
 	if !dbResult {
 		log.Println("Could not update message with sentiment")
 	} else {
 		log.Println("Message was updated successfully with sentiment")
+	}
+	return &sentimentAnalysis.Sentiment, nil
+}
+
+var warnIfTooNegative = func(message *slackevents.MessageEvent, apiForTeam dsedb.ApiForTeam, sentiment dsedb.Sentiment) error {
+	log.Printf("Warning of a bad message, detected negativity is %f", sentiment.Negative)
+	if sentiment.Negative >= warnIfTooBadThreshold {
+		messageVisibleOnlyByUser := heredoc.Docf(`
+			:warning: Be careful ! Your message is %.0f%% negative
+
+			:sunny: Try to stay positive to boost productivity and friendliness in the workspace
+
+			:slack: Come talk to me to find out more!`, sentiment.Negative*100,
+		)
+
+		// This is annoying : an Ephemeral message is NOT notified to the user
+		// So if it is the first message sent under a thread, the user would never see it
+		// (Although is is visible when clicking the "start a thread" button in Slack)
+		// Therefore, only send the message in a thread if it is not the first message to be threaded
+		ephemeralMsgOptions := []slack.MsgOption{
+			slack.MsgOptionText(messageVisibleOnlyByUser, false),
+		}
+		if message.ThreadTimeStamp != "" {
+			ephemeralMsgOptions = append(ephemeralMsgOptions, slack.MsgOptionTS(message.ThreadTimeStamp))
+		}
+		_, postError := apiForTeam.SlackBotUserApiClient.PostEphemeral(
+			message.Channel,
+			message.User,
+			ephemeralMsgOptions...,
+		)
+		log.Println("The message is too negative, sending a warning to the user")
+		if postError != nil {
+			message := fmt.Sprintf("Error while posting ephemeral message %s", postError)
+			return errors.New(message)
+		}
 	}
 	return nil
 }
